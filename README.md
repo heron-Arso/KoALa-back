@@ -1,2 +1,2 @@
 # arsoback
-<img width="1800" height="1200" alt="arso_erd" src="https://github.com/user-attachments/assets/fb186403-f530-45bf-b2d8-59039bbfdef5" />
+<img width="1925" height="1238" alt="arso_erd_sku_wish" src="https://github.com/user-attachments/assets/5ef01efe-7072-4ed1-a217-a8d60bba208c" />
