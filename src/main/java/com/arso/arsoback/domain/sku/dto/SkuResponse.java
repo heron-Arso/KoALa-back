@@ -12,7 +12,6 @@ public record SkuResponse(
         int stock,
         String status
 ) {
-
     public static SkuResponse from(Sku sku) {
         return new SkuResponse(
                 sku.getId(),

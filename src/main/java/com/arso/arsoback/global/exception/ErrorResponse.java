@@ -1,6 +1,7 @@
 package com.arso.arsoback.global.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -13,6 +14,7 @@ public record ErrorResponse(
         OffsetDateTime timestamp,
         List<FieldError> fieldErrors
 ) {
+
     public static ErrorResponse of(ErrorCode errorCode, String path) {
         return new ErrorResponse(
                 false,
@@ -50,5 +52,6 @@ public record ErrorResponse(
             String field,
             Object rejectedValue,
             String reason
-    ) {}
+    ) {
+    }
 }

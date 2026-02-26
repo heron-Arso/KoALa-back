@@ -1,84 +1,64 @@
 package com.arso.arsoback.global.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import org.springframework.http.HttpStatus;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
-import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        ErrorResponse body = ErrorResponse.of(e.getErrorCode(), request.getRequestURI());
-        return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(body);
+    public ResponseEntity<ErrorResponse> handleBusiness(BusinessException e, HttpServletRequest req) {
+        ErrorCode ec = e.getErrorCode();
+        return ResponseEntity
+                .status(ec.getStatus())
+                .body(ErrorResponse.of(ec, req.getRequestURI(), e.getMessage()));
     }
 
+    // @Valid Body 검증 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleInvalidBody(MethodArgumentNotValidException e, HttpServletRequest req) {
         List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(this::toFieldError)
-                .collect(Collectors.toList());
+                .toList();
 
-        ErrorResponse body = ErrorResponse.of(ErrorCode.VALIDATION_ERROR, request.getRequestURI(), fieldErrors);
-        return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getHttpStatus()).body(body);
+        ErrorCode ec = ErrorCode.INVALID_REQUEST;
+        return ResponseEntity
+                .status(ec.getStatus())
+                .body(ErrorResponse.of(ec, req.getRequestURI(), fieldErrors));
     }
 
-    @ExceptionHandler(BindException.class)
-    public ResponseEntity<ErrorResponse> handleBindException(BindException e, HttpServletRequest request) {
-        List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(this::toFieldError)
-                .collect(Collectors.toList());
-
-        ErrorResponse body = ErrorResponse.of(ErrorCode.VALIDATION_ERROR, request.getRequestURI(), fieldErrors);
-        return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.getHttpStatus()).body(body);
+    // PathVariable/RequestParam 검증 실패
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraint(ConstraintViolationException e, HttpServletRequest req) {
+        ErrorCode ec = ErrorCode.INVALID_REQUEST;
+        return ResponseEntity
+                .status(ec.getStatus())
+                .body(ErrorResponse.of(ec, req.getRequestURI(), e.getMessage()));
     }
 
-    @ExceptionHandler(ErrorResponseException.class)
-    public ResponseEntity<ErrorResponse> handleSpringErrorResponseException(ErrorResponseException e, HttpServletRequest request) {
-
-        HttpStatus status = HttpStatus.valueOf(e.getStatusCode().value());
-        ErrorCode code = switch (status) {
-            case NOT_FOUND -> ErrorCode.NOT_FOUND;
-            case METHOD_NOT_ALLOWED -> ErrorCode.METHOD_NOT_ALLOWED;
-            default -> ErrorCode.BAD_REQUEST;
-        };
-
-        String detail = null;
-        if (e.getBody() != null) {
-            detail = e.getBody().getDetail(); // ✅ 여기서 reason/detail 가져옴
-        }
-        if (detail == null || detail.isBlank()) {
-            detail = code.getMessage();
-        }
-
-        ErrorResponse body = ErrorResponse.of(code, request.getRequestURI(), detail);
-        return ResponseEntity.status(code.getHttpStatus()).body(body);
-    }
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnexpected(Exception e, HttpServletRequest request) {
-        // TODO: 로그는 logback-spring.xml + logger로 남기면 됨 (지금은 MVP라 단순 처리)
-        ErrorResponse body = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request.getRequestURI());
-        return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus()).body(body);
+    public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
+        ErrorCode ec = ErrorCode.INTERNAL_ERROR;
+        return ResponseEntity
+                .status(ec.getStatus())
+                .body(ErrorResponse.of(ec, req.getRequestURI()));
     }
 
     private ErrorResponse.FieldError toFieldError(FieldError fe) {
+        Object rejected = fe.getRejectedValue();
         return new ErrorResponse.FieldError(
                 fe.getField(),
-                fe.getRejectedValue(),
-                Objects.toString(fe.getDefaultMessage(), "Invalid value")
+                rejected,
+                fe.getDefaultMessage()
         );
     }
 }

@@ -5,28 +5,32 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     // Common
-    BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-400", "Bad request."),
-    VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "COMMON-400-VALID", "Validation error."),
-    NOT_FOUND(HttpStatus.NOT_FOUND, "COMMON-404", "Resource not found."),
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "COMMON-405", "Method not allowed."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-500", "Internal server error."),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "COMMON_400", "요청 값이 올바르지 않습니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_500", "서버 오류가 발생했습니다."),
 
-    // Domain examples (필요할 때 추가)
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-404", "User not found."),
-    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT-404", "Product not found.");
+    // SKU
+    SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "SKU_404", "SKU를 찾을 수 없습니다."),
 
-    private final HttpStatus httpStatus;
+    // ORDER
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER_404", "주문을 찾을 수 없습니다."),
+    ORDER_ALREADY_PAID(HttpStatus.CONFLICT, "ORDER_409", "이미 결제 완료된 주문입니다."),
+
+    // PAYMENT
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "PAYMENT_400", "결제 금액이 주문 금액과 일치하지 않습니다."),
+    PAYMENT_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "PAYMENT_502", "결제사 검증에 실패했습니다.");
+
+    private final HttpStatus status;
     private final String code;
     private final String message;
 
-    ErrorCode(HttpStatus httpStatus, String code, String message) {
-        this.httpStatus = httpStatus;
+    ErrorCode(HttpStatus status, String code, String message) {
+        this.status = status;
         this.code = code;
         this.message = message;
     }
 
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
+    public HttpStatus getStatus() {
+        return status;
     }
 
     public String getCode() {

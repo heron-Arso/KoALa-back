@@ -4,6 +4,7 @@ import com.arso.arsoback.domain.sku.dto.SkuCreateRequest;
 import com.arso.arsoback.domain.sku.dto.SkuResponse;
 import com.arso.arsoback.domain.sku.dto.SkuUpdateRequest;
 import com.arso.arsoback.domain.sku.entity.Sku;
+import com.arso.arsoback.domain.sku.exception.SkuNotFoundException;
 import com.arso.arsoback.domain.sku.repository.SkuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,10 @@ public class SkuService {
     @Transactional
     public SkuResponse create(SkuCreateRequest request) {
         Sku sku = new Sku(
-                request.getName(),
-                request.getDescription(),
-                request.getPrice(),
-                request.getStock()
+                request.name(),
+                request.description(),
+                request.price(),
+                request.stock()
         );
 
         Sku saved = skuRepository.save(sku);
@@ -33,7 +34,7 @@ public class SkuService {
 
     public SkuResponse get(Long id) {
         Sku sku = skuRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("SKU not found"));
+                .orElseThrow(SkuNotFoundException::new);
         return SkuResponse.from(sku);
     }
 
@@ -47,13 +48,13 @@ public class SkuService {
     @Transactional
     public SkuResponse update(Long id, SkuUpdateRequest request) {
         Sku sku = skuRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("SKU not found"));
+                .orElseThrow(SkuNotFoundException::new);
 
         sku.update(
-                request.getName(),
-                request.getDescription(),
-                request.getPrice(),
-                request.getStock()
+                request.name(),
+                request.description(),
+                request.price(),
+                request.stock()
         );
 
         return SkuResponse.from(sku);
@@ -61,6 +62,9 @@ public class SkuService {
 
     @Transactional
     public void delete(Long id) {
+        if (!skuRepository.existsById(id)) {
+            throw new SkuNotFoundException();
+        }
         skuRepository.deleteById(id);
     }
 }
