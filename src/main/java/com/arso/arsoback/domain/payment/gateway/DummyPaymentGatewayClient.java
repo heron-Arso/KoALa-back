@@ -9,8 +9,21 @@ public class DummyPaymentGatewayClient implements PaymentGatewayClient {
 
     @Override
     public VerifiedPayment verify(String paymentKey) {
-        // ✅ 지금은 PG 연동 안 하니까 "항상 성공" 가짜 구현
-        // 나중에 토스/포트원 붙일 때 여기만 교체하면 된다.
-        return new VerifiedPayment(paymentKey, new BigDecimal("10000.00"), true);
+        // 형식: DUMMY_15000 또는 DUMMY_15000.50
+        // 파싱 실패하면 success=false 로 처리
+        try {
+            BigDecimal amount = parseAmount(paymentKey);
+            return new VerifiedPayment(paymentKey, amount, true);
+        } catch (Exception e) {
+            return new VerifiedPayment(paymentKey, null, false);
+        }
+    }
+
+    private BigDecimal parseAmount(String paymentKey) {
+        String[] parts = paymentKey.split("_");
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Invalid dummy paymentKey");
+        }
+        return new BigDecimal(parts[1]);
     }
 }

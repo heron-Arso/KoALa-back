@@ -17,7 +17,6 @@ public class Order {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // MVP: user 연결은 나중에 (지금은 userId만 숫자로 들고간다)
     @Column(nullable = false)
     private Long userId;
 
@@ -38,6 +37,10 @@ public class Order {
         this.totalAmount = totalAmount;
         this.status = OrderStatus.CREATED;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
     }
 
     public void markPaid() {
