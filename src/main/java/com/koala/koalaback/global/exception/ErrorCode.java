@@ -1,0 +1,75 @@
+package com.koala.koalaback.global.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum ErrorCode {
+
+    // Common
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "C001", "잘못된 입력값입니다."),
+    RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "C002", "리소스를 찾을 수 없습니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C003", "서버 오류가 발생했습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C004", "인증이 필요합니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "C005", "권한이 없습니다."),
+    DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "C006", "이미 존재하는 리소스입니다."),
+
+    // User
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "U002", "이미 사용 중인 이메일입니다."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "U003", "비밀번호가 올바르지 않습니다."),
+    USER_SUSPENDED(HttpStatus.FORBIDDEN, "U004", "정지된 계정입니다."),
+    USER_INACTIVE(HttpStatus.FORBIDDEN, "U005", "비활성화된 계정입니다."),
+
+    // Auth
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A001", "유효하지 않은 토큰입니다."),
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "만료된 토큰입니다."),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "A003", "리프레시 토큰을 찾을 수 없습니다."),
+
+    // Artist
+    ARTIST_NOT_FOUND(HttpStatus.NOT_FOUND, "AR001", "아티스트를 찾을 수 없습니다."),
+    ARTIST_SLUG_ALREADY_EXISTS(HttpStatus.CONFLICT, "AR002", "이미 사용 중인 슬러그입니다."),
+
+    // SKU
+    SKU_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "상품을 찾을 수 없습니다."),
+    SKU_OUT_OF_STOCK(HttpStatus.CONFLICT, "S002", "재고가 부족합니다."),
+    SKU_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "S003", "판매 중이 아닌 상품입니다."),
+    INVALID_ANGLE_DEGREE(HttpStatus.BAD_REQUEST, "S004", "유효하지 않은 각도값입니다."),
+    DUPLICATE_ANGLE_DEGREE(HttpStatus.BAD_REQUEST, "S005", "중복된 각도값이 있습니다."),
+    FRAME_ANGLE_COUNT_MISMATCH(HttpStatus.BAD_REQUEST, "S006", "파일 수와 각도 배열 길이가 다릅니다."),
+
+    // Cart
+    CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CA001", "장바구니를 찾을 수 없습니다."),
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CA002", "장바구니 상품을 찾을 수 없습니다."),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "주문을 찾을 수 없습니다."),
+    ORDER_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "O002", "취소할 수 없는 주문 상태입니다."),
+    ORDER_ALREADY_PAID(HttpStatus.CONFLICT, "O003", "이미 결제된 주문입니다."),
+
+    // Payment
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST, "P002", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_ALREADY_PROCESSED(HttpStatus.CONFLICT, "P003", "이미 처리된 결제입니다."),
+    PAYMENT_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "P004", "결제 처리 중 오류가 발생했습니다."),
+
+    // Review
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "R002", "이미 리뷰를 작성했습니다."),
+    REVIEW_NOT_ALLOWED(HttpStatus.FORBIDDEN, "R003", "리뷰 작성 권한이 없습니다."),
+
+    // Admin
+    ADMIN_NOT_FOUND(HttpStatus.NOT_FOUND, "AD001", "관리자를 찾을 수 없습니다."),
+    ADMIN_LOCKED(HttpStatus.FORBIDDEN, "AD002", "잠긴 관리자 계정입니다."),
+    ADMIN_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AD003", "아이디 또는 비밀번호가 올바르지 않습니다."),
+
+    // File
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F002", "지원하지 않는 파일 형식입니다.");
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+}
