@@ -28,8 +28,16 @@ public class S3StorageUploader {
     @Value("${koala.cdn-base-url}")
     private String cdnBaseUrl;
 
+    /**
+     * 파일 업로드
+     * @param file      업로드할 파일
+     * @param directory S3 저장 경로 (예: "skus/SKU-001/360")
+     * @return CDN URL
+     */
     public String upload(MultipartFile file, String directory) {
-        String key = directory + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+        validateFile(file);
+
+        String key = buildKey(directory, file.getOriginalFilename());
         try {
             s3Client.putObject(
                     PutObjectRequest.builder()
@@ -42,18 +50,75 @@ public class S3StorageUploader {
             );
             log.info("S3 upload success: key={}", key);
             return cdnBaseUrl + "/" + key;
+
         } catch (IOException e) {
             log.error("S3 upload failed: key={}", key, e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
+    /**
+     * byte[] 직접 업로드 — 리사이즈 후 썸네일 저장 시 사용
+     */
+    public String uploadBytes(byte[] bytes, String directory,
+                              String filename, String contentType) {
+        String key = buildKey(directory, filename);
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(contentType)
+                            .contentLength((long) bytes.length)
+                            .build(),
+                    RequestBody.fromBytes(bytes)
+            );
+            log.info("S3 upload bytes success: key={}", key);
+            return cdnBaseUrl + "/" + key;
+
+        } catch (Exception e) {
+            log.error("S3 upload bytes failed: key={}", key, e);
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 파일 삭제
+     */
     public void delete(String fileUrl) {
         String key = fileUrl.replace(cdnBaseUrl + "/", "");
-        s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build());
-        log.info("S3 delete success: key={}", key);
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build());
+            log.info("S3 delete success: key={}", key);
+        } catch (Exception e) {
+            log.warn("S3 delete failed: key={}, error={}", key, e.getMessage());
+        }
+    }
+
+    // ── Private helpers ───────────────────────────────────
+
+    private String buildKey(String directory, String originalFilename) {
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        String ext = extractExtension(originalFilename);
+        return directory + "/" + uuid + ext;
+    }
+
+    private String extractExtension(String filename) {
+        if (filename == null || !filename.contains(".")) return "";
+        return filename.substring(filename.lastIndexOf("."));
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "파일이 비어있습니다.");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.startsWith("image/")
+                && !contentType.startsWith("video/"))) {
+            throw new BusinessException(ErrorCode.INVALID_FILE_TYPE);
+        }
     }
 }

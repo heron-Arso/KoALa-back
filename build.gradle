@@ -26,7 +26,6 @@ repositories {
 
 dependencyManagement {
     imports {
-        // AWS Spring Cloud BOM — 버전 충돌 방지
         mavenBom 'io.awspring.cloud:spring-cloud-aws-dependencies:3.1.1'
     }
 }
@@ -41,14 +40,10 @@ dependencies {
 
     // ── Security ──────────────────────────────────────────
     implementation 'org.springframework.boot:spring-boot-starter-security'
-    // OAuth2 — 소셜 로그인 구현 시 주석 해제
-    // implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
 
     // ── DB ────────────────────────────────────────────────
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.h2database:h2'
-
-    // Flyway — DB 마이그레이션
     implementation 'org.flywaydb:flyway-mysql'
 
     // ── Redis ─────────────────────────────────────────────
@@ -76,7 +71,7 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
-    // ── Swagger / OpenAPI ─────────────────────────────────
+    // ── Swagger ───────────────────────────────────────────
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
 
     // ── Utils ─────────────────────────────────────────────
@@ -88,6 +83,9 @@ dependencies {
     // ── Test ──────────────────────────────────────────────
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.8.0'
+    testImplementation 'org.assertj:assertj-core:3.25.1'
     testCompileOnly    'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
     testRuntimeOnly    'org.junit.platform:junit-platform-launcher'
