@@ -77,6 +77,9 @@ dependencies {
     // ── Utils ─────────────────────────────────────────────
     implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
 
+    // ─── OAuth2 ───────────────────────────
+    implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
+
     // ── DevTools ──────────────────────────────────────────
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

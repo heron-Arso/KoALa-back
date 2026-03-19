@@ -36,11 +36,19 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private String status;  // ACTIVE, INACTIVE, SUSPENDED
 
+    @Column(length = 20)
+    private String oauthProvider;   // KAKAO, NAVER (일반 회원은 null)
+
+    @Column(length = 100)
+    private String oauthId;         // 소셜 로그인 고유 ID
+
     private LocalDateTime lastLoginAt;
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAddress> addresses = new ArrayList<>();
+
+    // ── 일반 회원가입용 Builder ───────────────────────────
 
     @Builder
     public User(String userCode, String email, String passwordHash,
@@ -52,6 +60,22 @@ public class User extends BaseTimeEntity {
         this.phone = phone;
         this.status = "ACTIVE";
     }
+
+    // ── 소셜 로그인용 Builder ─────────────────────────────
+
+    public static User createOAuthUser(String userCode, String email, String name, String oauthProvider, String oauthId) {
+        User user = new User();
+        user.userCode = userCode;
+        user.email = email;
+        user.passwordHash = "";
+        user.name = name;
+        user.oauthProvider = oauthProvider;
+        user.oauthId = oauthId;
+        user.status = "ACTIVE";
+        return user;
+    }
+
+    // ── 메서드 ────────────────────────────────────────────
 
     public void updateProfile(String name, String phone) {
         this.name = name;
@@ -66,14 +90,19 @@ public class User extends BaseTimeEntity {
         this.lastLoginAt = LocalDateTime.now();
     }
 
+    public void updateOAuthInfo(String name) {
+        this.name = name;
+    }
+
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
         this.status = "INACTIVE";
     }
 
+    public void suspend()  { this.status = "SUSPENDED"; }
+    public void activate() { this.status = "ACTIVE"; }
+
     public boolean isActive() {
         return "ACTIVE".equals(this.status) && this.deletedAt == null;
     }
-    public void suspend()  { this.status = "SUSPENDED"; }
-    public void activate() { this.status = "ACTIVE"; }
 }
