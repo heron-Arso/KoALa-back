@@ -2,6 +2,9 @@ package com.koala.koalaback.global.config;
 
 import com.koala.koalaback.global.security.JwtFilter;
 import com.koala.koalaback.global.security.JwtProvider;
+import com.koala.koalaback.global.security.oauth2.CustomOAuth2UserService;
+import com.koala.koalaback.global.security.oauth2.OAuth2FailureHandler;
+import com.koala.koalaback.global.security.oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +31,9 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -42,11 +48,24 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/artists/**",
-                                "/api/v1/skus/**").permitAll()
+                                "/api/v1/skus/**",
+                                "/api/v1/banners/**").permitAll()
+                        .requestMatchers(
+                                "/oauth2/**",
+                                "/login/oauth2/**").permitAll()
                         .requestMatchers("/webhook/**").permitAll()
+                        .requestMatchers("/swagger-ui/**",
+                                "/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/admin/api/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+                )
+                // OAuth2 로그인 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider),
                         UsernamePasswordAuthenticationFilter.class)
