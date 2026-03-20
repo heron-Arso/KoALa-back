@@ -27,6 +27,7 @@ public class Artist extends BaseTimeEntity {
     private String slug;
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
 
     @Column(length = 700)
@@ -52,15 +53,13 @@ public class Artist extends BaseTimeEntity {
         this.isActive = true;
     }
 
-    public void update(String name, String slug, String description, String profileImageUrl) {
+    public void update(String name, String slug,
+                       String description, String profileImageUrl) {
         this.name = name;
         this.slug = slug;
         this.description = description;
         this.profileImageUrl = profileImageUrl;
     }
-
-    public void activate() { this.isActive = true; }
-    public void deactivate() { this.isActive = false; }
 
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();

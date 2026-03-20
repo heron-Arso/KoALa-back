@@ -39,8 +39,7 @@ public class WishlistController {
             @PathVariable String skuCode) {
         wishlistService.removeFromWishlist(userId, skuCode);
         return ApiResponse.ok();
-    }h
-
+    }
     @GetMapping("/{skuCode}/check")
     public ApiResponse<Boolean> isWishlisted(
             @AuthenticationPrincipal Long userId,

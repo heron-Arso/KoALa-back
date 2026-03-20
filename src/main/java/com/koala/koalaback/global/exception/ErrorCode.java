@@ -15,6 +15,8 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C004", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "C005", "권한이 없습니다."),
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "C006", "이미 존재하는 리소스입니다."),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "C007", "잘못된 요청입니다."),   // ← 추가
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C008", "서버 내부 오류가 발생했습니다."), // ← 추가
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
@@ -39,7 +41,8 @@ public enum ErrorCode {
     INVALID_ANGLE_DEGREE(HttpStatus.BAD_REQUEST, "S004", "유효하지 않은 각도값입니다."),
     DUPLICATE_ANGLE_DEGREE(HttpStatus.BAD_REQUEST, "S005", "중복된 각도값이 있습니다."),
     FRAME_ANGLE_COUNT_MISMATCH(HttpStatus.BAD_REQUEST, "S006", "파일 수와 각도 배열 길이가 다릅니다."),
-
+    //ARTWORK
+    ARTWORK_NOT_FOUND(HttpStatus.NOT_FOUND, "AW001", "작품을 찾을 수 없습니다."),
     // Cart
     CART_NOT_FOUND(HttpStatus.NOT_FOUND, "CA001", "장바구니를 찾을 수 없습니다."),
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CA002", "장바구니 상품을 찾을 수 없습니다."),
@@ -72,4 +75,8 @@ public enum ErrorCode {
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
+
+    public HttpStatus getStatus(){
+        return this.httpStatus;
+    }
 }
