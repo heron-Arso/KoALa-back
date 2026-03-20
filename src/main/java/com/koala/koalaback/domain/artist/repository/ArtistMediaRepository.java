@@ -7,9 +7,7 @@ import java.util.List;
 
 public interface ArtistMediaRepository extends JpaRepository<ArtistMedia, Long> {
 
-    List<ArtistMedia> findByArtistIdAndMediaRoleOrderBySortOrderAsc(Long artistId, String mediaRole);
+    List<ArtistMedia> findByArtistIdOrderBySortOrderAsc(Long artistId);
 
-    List<ArtistMedia> findByArtistIdOrderByMediaRoleAscSortOrderAsc(Long artistId);
-
-    void deleteByArtistIdAndMediaRole(Long artistId, String mediaRole);
+    void deleteByArtistId(Long artistId);
 }

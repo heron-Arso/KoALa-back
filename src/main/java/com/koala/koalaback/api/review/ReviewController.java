@@ -55,25 +55,4 @@ public class ReviewController {
             @PageableDefault(size = 10) Pageable pageable) {
         return ApiResponse.ok(reviewService.getMyReviews(userId, pageable));
     }
-
-    @GetMapping("/admin/api/v1/reviews/pending")
-    public ApiResponse<PageResponse<ReviewDto.ReviewResponse>> getPendingReviews(
-            @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResponse.ok(reviewService.getPendingReviews(pageable));
-    }
-
-    @PatchMapping("/admin/api/v1/reviews/{reviewCode}/moderate")
-    public ApiResponse<ReviewDto.ReviewResponse> moderateReview(
-            @PathVariable String reviewCode,
-            @Valid @RequestBody ReviewDto.ModerateRequest req) {
-        return ApiResponse.ok(reviewService.moderateReview(reviewCode, req));
-    }
-
-    @PatchMapping("/admin/api/v1/reviews/{reviewCode}/featured")
-    public ApiResponse<Void> setFeatured(
-            @PathVariable String reviewCode,
-            @RequestParam boolean featured) {
-        reviewService.setFeatured(reviewCode, featured);
-        return ApiResponse.ok();
-    }
 }

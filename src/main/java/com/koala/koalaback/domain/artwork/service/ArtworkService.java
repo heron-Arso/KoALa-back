@@ -21,8 +21,7 @@ public class ArtworkService {
 
     public ArtworkResponse get(Long artworkId) {
         Artwork artwork = artworkRepository.findById(artworkId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REQUEST, "작품을 찾을 수 없습니다. artworkId=" + artworkId));
-
+                .orElseThrow(() -> new BusinessException(ErrorCode.ARTWORK_NOT_FOUND));
         return ArtworkResponse.from(artwork);
     }
     public List<ArtworkListResponse> getByArtist(Long artistId) {

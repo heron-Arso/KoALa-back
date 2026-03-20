@@ -2,6 +2,7 @@ package com.koala.koalaback.domain.artist.service;
 
 import com.koala.koalaback.domain.artist.dto.ArtistDto;
 import com.koala.koalaback.domain.artist.entity.Artist;
+import com.koala.koalaback.domain.artist.entity.ArtistMedia;
 import com.koala.koalaback.domain.artist.repository.ArtistMediaRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistRepository;
 import com.koala.koalaback.global.exception.BusinessException;
@@ -13,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,32 +25,26 @@ public class ArtistService {
     private final ArtistMediaRepository artistMediaRepository;
     private final CodeGenerator codeGenerator;
 
+    // ── 유저용 ────────────────────────────────────────────
+
     public PageResponse<ArtistDto.SummaryResponse> getArtists(Pageable pageable) {
         return PageResponse.of(
-                artistRepository.findByIsActiveTrueAndDeletedAtIsNull(pageable)
+                artistRepository.findByDeletedAtIsNullAndIsActiveTrue(pageable)
                         .map(ArtistDto.SummaryResponse::from)
         );
     }
 
-    public ArtistDto.DetailResponse getArtistBySlug(String slug) {
-        Artist artist = artistRepository.findBySlug(slug)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ARTIST_NOT_FOUND));
-        var media = artistMediaRepository.findByArtistIdOrderByMediaRoleAscSortOrderAsc(artist.getId());
+    public ArtistDto.DetailResponse getArtist(String artistCode) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        List<ArtistMedia> media = artistMediaRepository
+                .findByArtistIdOrderBySortOrderAsc(artist.getId());
         return ArtistDto.DetailResponse.from(artist, media);
     }
 
-    public ArtistDto.DetailResponse getArtistByCode(String artistCode) {
-        Artist artist = artistRepository.findByArtistCode(artistCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ARTIST_NOT_FOUND));
-        var media = artistMediaRepository.findByArtistIdOrderByMediaRoleAscSortOrderAsc(artist.getId());
-        return ArtistDto.DetailResponse.from(artist, media);
-    }
+    // ── 어드민용 ──────────────────────────────────────────
 
     @Transactional
     public ArtistDto.SummaryResponse createArtist(ArtistDto.CreateRequest req) {
-        if (artistRepository.existsBySlug(req.getSlug())) {
-            throw new BusinessException(ErrorCode.ARTIST_SLUG_ALREADY_EXISTS);
-        }
         Artist artist = Artist.builder()
                 .artistCode(codeGenerator.generateCode())
                 .name(req.getName())
@@ -61,30 +58,20 @@ public class ArtistService {
     @Transactional
     public ArtistDto.SummaryResponse updateArtist(String artistCode, ArtistDto.UpdateRequest req) {
         Artist artist = getArtistEntityByCode(artistCode);
-
-        if (!artist.getSlug().equals(req.getSlug()) && artistRepository.existsBySlug(req.getSlug())) {
-            throw new BusinessException(ErrorCode.ARTIST_SLUG_ALREADY_EXISTS);
-        }
-
-        artist.update(req.getName(), req.getSlug(), req.getDescription(), req.getProfileImageUrl());
+        artist.update(req.getName(), req.getSlug(),
+                req.getDescription(), req.getProfileImageUrl());
         return ArtistDto.SummaryResponse.from(artist);
     }
 
     @Transactional
     public void deleteArtist(String artistCode) {
-        Artist artist = getArtistEntityByCode(artistCode);
-        artist.softDelete();
+        getArtistEntityByCode(artistCode).softDelete();
     }
 
-    // ── Package-level helper (SKU 도메인에서 사용) ─────────
+    // ── 공통 ──────────────────────────────────────────────
 
     public Artist getArtistEntityByCode(String artistCode) {
         return artistRepository.findByArtistCode(artistCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ARTIST_NOT_FOUND));
-    }
-
-    public Artist getArtistEntityById(Long id) {
-        return artistRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ARTIST_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
     }
 }

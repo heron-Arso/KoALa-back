@@ -26,7 +26,7 @@ public class Artwork {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "artwork_year", nullable = false)
     private Integer year;
 
     @Column(name = "width_mm")

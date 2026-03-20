@@ -13,7 +13,7 @@ public interface ArtistRepository extends JpaRepository<Artist, Long> {
 
     Optional<Artist> findBySlug(String slug);
 
-    boolean existsBySlug(String slug);
+    Page<Artist> findByDeletedAtIsNull(Pageable pageable);
 
-    Page<Artist> findByIsActiveTrueAndDeletedAtIsNull(Pageable pageable);
+    Page<Artist> findByDeletedAtIsNullAndIsActiveTrue(Pageable pageable);
 }
