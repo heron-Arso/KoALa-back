@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 public class UserDto {
 
     // ── Requests ──────────────────────────────────────────
@@ -37,9 +39,10 @@ public class UserDto {
 
     @Getter
     public static class UpdateProfileRequest {
-        @NotBlank @Size(max = 100)
+        @Size(max = 100)
         private String name;
 
+        @Size(max = 30)
         private String phone;
     }
 
@@ -50,6 +53,12 @@ public class UserDto {
 
         @NotBlank @Size(min = 8, max = 64)
         private String newPassword;
+    }
+
+    @Getter
+    public static class RefreshRequest {
+        @NotBlank
+        private String refreshToken;
     }
 
     // ── Responses ─────────────────────────────────────────
@@ -79,6 +88,8 @@ public class UserDto {
         private String name;
         private String phone;
         private String status;
+        private String oauthProvider;
+        private LocalDateTime createdAt;
 
         public static ProfileResponse from(User user) {
             return ProfileResponse.builder()
@@ -88,6 +99,8 @@ public class UserDto {
                     .name(user.getName())
                     .phone(user.getPhone())
                     .status(user.getStatus())
+                    .oauthProvider(user.getOauthProvider())
+                    .createdAt(user.getCreatedAt())
                     .build();
         }
     }

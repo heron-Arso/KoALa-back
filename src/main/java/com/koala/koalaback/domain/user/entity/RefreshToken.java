@@ -1,21 +1,21 @@
 package com.koala.koalaback.domain.user.entity;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 
 @Getter
-@AllArgsConstructor
+@Builder
 @RedisHash("refresh_token")
 public class RefreshToken {
 
     @Id
-    private Long userId;
+    private String userId;
 
-    private String token;
+    private String refreshToken;
 
     @TimeToLive
-    private Long expiry; // seconds
+    private Long expiry;
 }

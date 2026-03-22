@@ -39,7 +39,8 @@ public class UserController {
     }
 
     @PostMapping("/api/v1/auth/logout")
-    public ApiResponse<Void> logout(@AuthenticationPrincipal Long userId) {
+    public ApiResponse<Void> logout(
+            @AuthenticationPrincipal Long userId) {
         userService.logout(userId);
         return ApiResponse.ok();
     }
@@ -68,7 +69,8 @@ public class UserController {
     }
 
     @DeleteMapping("/api/v1/users/me")
-    public ApiResponse<Void> withdraw(@AuthenticationPrincipal Long userId) {
+    public ApiResponse<Void> withdraw(
+            @AuthenticationPrincipal Long userId) {
         userService.withdraw(userId);
         return ApiResponse.ok();
     }

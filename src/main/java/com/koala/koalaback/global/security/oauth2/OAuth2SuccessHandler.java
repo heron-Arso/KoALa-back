@@ -43,9 +43,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 리프레시 토큰 Redis 저장
         long expirySeconds = refreshTokenExpiryMs / 1000;
         refreshTokenRepository.save(
-                new RefreshToken(user.getId(), refreshToken, expirySeconds));
+                RefreshToken.builder()
+                        .userId(String.valueOf(user.getId()))  // ← Long → String
+                        .refreshToken(refreshToken)
+                        .expiry(expirySeconds)
+                        .build()
+        );
 
-        // 프론트엔드로 토큰 전달 (쿼리 파라미터 방식)
+        // 프론트엔드로 토큰 전달
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)

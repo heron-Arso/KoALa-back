@@ -70,7 +70,11 @@ public enum ErrorCode {
 
     // File
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
-    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F002", "지원하지 않는 파일 형식입니다.");
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F002", "지원하지 않는 파일 형식입니다."),
+
+    // User 섹션에 추가
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "U006", "이미 사용 중인 이메일입니다."),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "U007", "이메일 또는 비밀번호가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
@@ -78,5 +82,6 @@ public enum ErrorCode {
 
     public HttpStatus getStatus(){
         return this.httpStatus;
+
     }
 }
