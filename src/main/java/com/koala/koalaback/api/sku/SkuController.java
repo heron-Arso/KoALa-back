@@ -27,10 +27,16 @@ public class SkuController {
         return ApiResponse.ok(skuService.getActiveSkus(pageable));
     }
 
-    @GetMapping("/api/v1/skus/{slug}")
+    @GetMapping("/api/v1/skus/{skuCode}")
+    public ApiResponse<SkuDto.DetailResponse> getSku(
+            @PathVariable String skuCode) {
+        return ApiResponse.ok(skuService.getSkuByCode(skuCode));
+    }
+
+ /*   @GetMapping("/api/v1/skus/{slug}")
     public ApiResponse<SkuDto.DetailResponse> getSku(@PathVariable String slug) {
         return ApiResponse.ok(skuService.getSkuBySlug(slug));
-    }
+    }*/
 
     @GetMapping("/api/v1/skus/{skuCode}/360-frames")
     public ApiResponse<SkuDto.FrameListResponse> get360Frames(@PathVariable String skuCode) {

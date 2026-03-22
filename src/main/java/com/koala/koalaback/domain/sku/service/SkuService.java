@@ -230,6 +230,8 @@ public class SkuService {
                 .findBySkuIdOrderByMediaRoleAscSortOrderAsc(sku.getId());
         return SkuDto.DetailResponse.from(sku, stock, stats, media);
     }
+
+
     public PageResponse<SkuDto.SummaryResponse> getAllSkus(Pageable pageable) {
         Page<SkuDto.SummaryResponse> page = skuRepository
                 .findByDeletedAtIsNull(pageable)
