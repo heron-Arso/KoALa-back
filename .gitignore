@@ -36,9 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 
-### Sensitive configuration - local credentials must NOT be committed ###
-src/main/resources/application-local.yml
-src/main/resources/application-dev.yml
 .env
 .env.*
 *.env

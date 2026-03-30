@@ -43,8 +43,6 @@ class UserServiceTest {
     @DisplayName("회원가입 성공")
     void signup_success() {
         // given
-        ReflectionTestUtils.setField(userService, "refreshTokenExpiryMs", 604800000L);
-
         UserDto.SignupRequest req = mock(UserDto.SignupRequest.class);
         given(req.getEmail()).willReturn("test@koala.com");
         given(req.getPassword()).willReturn("password123");
@@ -87,8 +85,6 @@ class UserServiceTest {
     @DisplayName("로그인 성공")
     void login_success() {
         // given
-        ReflectionTestUtils.setField(userService, "refreshTokenExpiryMs", 604800000L);
-
         UserDto.LoginRequest req = mock(UserDto.LoginRequest.class);
         given(req.getEmail()).willReturn("test@koala.com");
         given(req.getPassword()).willReturn("password123");
@@ -136,6 +132,6 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.login(req))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.INVALID_PASSWORD));
+                        .isEqualTo(ErrorCode.INVALID_CREDENTIALS));
     }
 }

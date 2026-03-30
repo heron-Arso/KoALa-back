@@ -1,14 +1,11 @@
 package com.koala.koalaback.domain.review.service;
 
-import com.koala.koalaback.domain.order.entity.Order;
 import com.koala.koalaback.domain.order.entity.OrderItem;
 import com.koala.koalaback.domain.order.repository.OrderItemRepository;
 import com.koala.koalaback.domain.review.dto.ReviewDto;
 import com.koala.koalaback.domain.review.entity.SkuReview;
-import com.koala.koalaback.domain.review.repository.SkuReviewMediaRepository;
 import com.koala.koalaback.domain.review.repository.SkuReviewRepository;
 import com.koala.koalaback.domain.sku.entity.Sku;
-import com.koala.koalaback.domain.sku.repository.SkuReviewStatsRepository;
 import com.koala.koalaback.domain.user.entity.User;
 import com.koala.koalaback.domain.user.service.UserService;
 import com.koala.koalaback.global.exception.BusinessException;
@@ -35,8 +32,6 @@ class ReviewServiceTest {
     private ReviewService reviewService;
 
     @Mock private SkuReviewRepository skuReviewRepository;
-    @Mock private SkuReviewMediaRepository skuReviewMediaRepository;
-    @Mock private SkuReviewStatsRepository skuReviewStatsRepository;
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private UserService userService;
     @Mock private CodeGenerator codeGenerator;
@@ -54,19 +49,12 @@ class ReviewServiceTest {
         given(req.getMediaList()).willReturn(Collections.emptyList());
 
         Sku sku = mock(Sku.class);
-        given(sku.getId()).willReturn(1L);
         given(sku.getSkuCode()).willReturn("SKU-001");
-        given(sku.getName()).willReturn("테스트 상품");
-
-        Order order = mock(Order.class);
 
         OrderItem orderItem = mock(OrderItem.class);
         given(orderItem.getSku()).willReturn(sku);
-        given(orderItem.getOrder()).willReturn(order);
 
         User user = mock(User.class);
-        given(user.getUserCode()).willReturn("USER-001");
-        given(user.getName()).willReturn("테스터");
 
         given(skuReviewRepository.existsByOrderItemId(1L)).willReturn(false);
         given(orderItemRepository.findByIdAndOrderUserId(1L, userId))

@@ -35,7 +35,6 @@ class StockServiceTest {
         // given
         Long skuId = 1L;
         Sku sku = mock(Sku.class);
-        given(sku.getStatus()).willReturn("ACTIVE");
 
         given(skuRepository.findById(skuId)).willReturn(Optional.of(sku));
         given(stockCacheService.getOrLoad(any(), any())).willReturn(10);
