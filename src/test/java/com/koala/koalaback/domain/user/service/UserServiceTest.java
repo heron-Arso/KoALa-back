@@ -80,7 +80,7 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.signup(req))
                 .isInstanceOf(BusinessException.class)
                 .satisfies(e -> assertThat(((BusinessException) e).getErrorCode())
-                        .isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS));
+                        .isEqualTo(ErrorCode.DUPLICATE_EMAIL));
     }
 
     @Test

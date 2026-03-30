@@ -39,6 +39,13 @@ public interface SkuRepository extends JpaRepository<Sku, Long> {
     @Query("SELECT s FROM Sku s WHERE s.isLimitedEdition = true AND s.status = 'ACTIVE' AND s.deletedAt IS NULL")
     Page<Sku> findLimitedEditions(Pageable pageable);
 
+    /** 장르별 상품 수 (ACTIVE, 미삭제) */
+    @Query("SELECT s.genre, COUNT(s) FROM Sku s WHERE s.status = 'ACTIVE' AND s.deletedAt IS NULL GROUP BY s.genre")
+    List<Object[]> countByGenre();
+
+    /** 전체 ACTIVE 상품 수 */
+    long countByStatusAndDeletedAtIsNull(String status);
+
     /** 어드민 전체 조회 (삭제 포함 옵션) */
     Page<Sku> findByDeletedAtIsNull(Pageable pageable);
 

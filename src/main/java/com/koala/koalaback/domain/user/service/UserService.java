@@ -55,12 +55,20 @@ public class UserService {
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
-        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
-            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);  // ← 괄호 하나 제거
-        }
-
         if (user.getDeletedAt() != null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        if ("SUSPENDED".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.USER_SUSPENDED);
+        }
+
+        if ("INACTIVE".equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.USER_INACTIVE);
+        }
+
+        if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         user.updateLastLoginAt();

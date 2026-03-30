@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +64,15 @@ public class SkuService {
 
     public SkuDto.DetailResponse getSkuByCode(String skuCode) {
         return toDetail(getSkuEntityByCode(skuCode));
+    }
+
+    public Map<String, Long> getGenreCounts() {
+        long total = skuRepository.countByStatusAndDeletedAtIsNull("ACTIVE");
+        Map<String, Long> result = new HashMap<>();
+        result.put("ALL", total);
+        skuRepository.countByGenre().forEach(row ->
+                result.put((String) row[0], (Long) row[1]));
+        return result;
     }
 
     // ── 360도 프레임 조회 (Redis 캐시) ────────────────────

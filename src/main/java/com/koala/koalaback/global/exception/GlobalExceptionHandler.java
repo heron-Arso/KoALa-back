@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
                 .map(this::toFieldError)
                 .toList();
 
-        ErrorCode ec = ErrorCode.INVALID_REQUEST;
+        ErrorCode ec = ErrorCode.INVALID_INPUT;
         return ResponseEntity
                 .status(ec.getStatus())
                 .body(ErrorResponse.of(ec, req.getRequestURI(), fieldErrors));
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
     // PathVariable/RequestParam 검증 실패
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraint(ConstraintViolationException e, HttpServletRequest req) {
-        ErrorCode ec = ErrorCode.INVALID_REQUEST;
+        ErrorCode ec = ErrorCode.INVALID_INPUT;
         return ResponseEntity
                 .status(ec.getStatus())
                 .body(ErrorResponse.of(ec, req.getRequestURI(), e.getMessage()));

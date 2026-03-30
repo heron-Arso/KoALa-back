@@ -15,12 +15,10 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C004", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "C005", "권한이 없습니다."),
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "C006", "이미 존재하는 리소스입니다."),
-    INVALID_REQUEST(HttpStatus.BAD_REQUEST, "C007", "잘못된 요청입니다."),   // ← 추가
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C008", "서버 내부 오류가 발생했습니다."), // ← 추가
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C007", "서버 내부 오류가 발생했습니다."),
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
-    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "U002", "이미 사용 중인 이메일입니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "U003", "비밀번호가 올바르지 않습니다."),
     USER_SUSPENDED(HttpStatus.FORBIDDEN, "U004", "정지된 계정입니다."),
     USER_INACTIVE(HttpStatus.FORBIDDEN, "U005", "비활성화된 계정입니다."),
@@ -72,10 +70,12 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F002", "지원하지 않는 파일 형식입니다."),
 
-    // User 섹션에 추가
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "U006", "이미 사용 중인 이메일입니다."),
-    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "U007", "이메일 또는 비밀번호가 올바르지 않습니다.");
-
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "U007", "이메일 또는 비밀번호가 올바르지 않습니다."),
+    //패스워드 리셋
+    PASSWORD_RESET_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "PR001", "인증코드를 찾을 수 없습니다."),
+    PASSWORD_RESET_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "PR002", "인증 코드가 만료되었습니다."),
+    SOCIAL_LOGIN_USER(HttpStatus.BAD_REQUEST, "PR003", "소셜 로그인 사용자는 비밀번호 찾기를 사용할 수 없습니다.");
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

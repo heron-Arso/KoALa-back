@@ -45,7 +45,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/signup",
-                                "/api/v1/auth/refresh").permitAll()
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/password-reset/send",    // ← 추가
+                                "/api/v1/auth/password-reset/verify",  // ← 추가
+                                "/api/v1/auth/password-reset/reset"    // ← 추가
+                        ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/artists/**",
                                 "/api/v1/skus/**",
@@ -54,13 +58,13 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**").permitAll()
                         .requestMatchers("/webhook/**").permitAll()
-                        .requestMatchers("/swagger-ui/**",
+                        .requestMatchers(
+                                "/swagger-ui/**",
                                 "/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/admin/api/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                // OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService))

@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,6 +38,11 @@ public class SkuController {
     public ApiResponse<SkuDto.DetailResponse> getSku(@PathVariable String slug) {
         return ApiResponse.ok(skuService.getSkuBySlug(slug));
     }*/
+
+    @GetMapping("/api/v1/skus/genre-counts")
+    public ApiResponse<Map<String, Long>> getGenreCounts() {
+        return ApiResponse.ok(skuService.getGenreCounts());
+    }
 
     @GetMapping("/api/v1/skus/{skuCode}/360-frames")
     public ApiResponse<SkuDto.FrameListResponse> get360Frames(@PathVariable String skuCode) {
