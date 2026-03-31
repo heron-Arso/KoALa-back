@@ -9,10 +9,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 
@@ -24,8 +24,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtProvider jwtProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Value("${jwt.refresh-token-expiry-ms}")
+    @Value("${jwt.access-token-expiry-ms:1800000}")
+    private long accessTokenExpiryMs;
+
+    @Value("${jwt.refresh-token-expiry-ms:604800000}")
     private long refreshTokenExpiryMs;
+
+    @Value("${app.secure-cookies:false}")
+    private boolean secureCookies;
 
     @Value("${oauth2.redirect-uri:http://localhost:3000/oauth2/callback}")
     private String redirectUri;
@@ -44,19 +50,32 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         long expirySeconds = refreshTokenExpiryMs / 1000;
         refreshTokenRepository.save(
                 RefreshToken.builder()
-                        .userId(String.valueOf(user.getId()))  // ← Long → String
+                        .userId(String.valueOf(user.getId()))
                         .refreshToken(refreshToken)
                         .expiry(expirySeconds)
                         .build()
         );
 
-        // 프론트엔드로 토큰 전달
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
-                .build().toUriString();
+        // HttpOnly 쿠키로 토큰 전달 (URL 노출 방지)
+        String sameSite = secureCookies ? "None" : "Lax";
+        response.addHeader("Set-Cookie",
+                ResponseCookie.from("accessToken", accessToken)
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/")
+                        .maxAge(accessTokenExpiryMs / 1000)
+                        .sameSite(sameSite)
+                        .build().toHeaderValue());
+        response.addHeader("Set-Cookie",
+                ResponseCookie.from("refreshToken", refreshToken)
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/api/v1/auth")
+                        .maxAge(expirySeconds)
+                        .sameSite(sameSite)
+                        .build().toHeaderValue());
 
-        log.info("OAuth2 login success: userId={}, redirect={}", user.getId(), redirectUri);
-        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+        log.info("OAuth2 login success: userId={}", user.getId());
+        getRedirectStrategy().sendRedirect(request, response, redirectUri);
     }
 }

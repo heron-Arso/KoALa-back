@@ -2,10 +2,15 @@ package com.koala.koalaback.api.user;
 
 import com.koala.koalaback.domain.user.dto.UserDto;
 import com.koala.koalaback.domain.user.service.UserService;
+import com.koala.koalaback.global.exception.BusinessException;
+import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.response.ApiResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,31 +22,54 @@ public class UserController {
 
     private final UserService userService;
 
+    @Value("${jwt.access-token-expiry-ms:1800000}")
+    private long accessTokenExpiryMs;
+
+    @Value("${jwt.refresh-token-expiry-ms:604800000}")
+    private long refreshTokenExpiryMs;
+
+    @Value("${app.secure-cookies:false}")
+    private boolean secureCookies;
+
     // ── Auth ──────────────────────────────────────────────
 
     @PostMapping("/api/v1/auth/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<UserDto.TokenResponse> signup(
-            @Valid @RequestBody UserDto.SignupRequest req) {
-        return ApiResponse.ok(userService.signup(req));
+    public ApiResponse<Void> signup(
+            @Valid @RequestBody UserDto.SignupRequest req,
+            HttpServletResponse response) {
+        UserDto.TokenResponse tokens = userService.signup(req);
+        setTokenCookies(response, tokens);
+        return ApiResponse.ok();
     }
 
     @PostMapping("/api/v1/auth/login")
-    public ApiResponse<UserDto.TokenResponse> login(
-            @Valid @RequestBody UserDto.LoginRequest req) {
-        return ApiResponse.ok(userService.login(req));
+    public ApiResponse<Void> login(
+            @Valid @RequestBody UserDto.LoginRequest req,
+            HttpServletResponse response) {
+        UserDto.TokenResponse tokens = userService.login(req);
+        setTokenCookies(response, tokens);
+        return ApiResponse.ok();
     }
 
     @PostMapping("/api/v1/auth/refresh")
-    public ApiResponse<UserDto.TokenResponse> refresh(
-            @RequestHeader("X-Refresh-Token") String refreshToken) {
-        return ApiResponse.ok(userService.refresh(refreshToken));
+    public ApiResponse<Void> refresh(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletResponse response) {
+        if (refreshToken == null) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+        UserDto.TokenResponse tokens = userService.refresh(refreshToken);
+        setTokenCookies(response, tokens);
+        return ApiResponse.ok();
     }
 
     @PostMapping("/api/v1/auth/logout")
     public ApiResponse<Void> logout(
-            @AuthenticationPrincipal Long userId) {
+            @AuthenticationPrincipal Long userId,
+            HttpServletResponse response) {
         userService.logout(userId);
+        clearTokenCookies(response);
         return ApiResponse.ok();
     }
 
@@ -113,5 +141,47 @@ public class UserController {
             @PathVariable Long addressId) {
         userService.deleteAddress(userId, addressId);
         return ApiResponse.ok();
+    }
+
+    // ── Cookie helpers ────────────────────────────────────
+
+    private void setTokenCookies(HttpServletResponse response, UserDto.TokenResponse tokens) {
+        String sameSite = secureCookies ? "None" : "Lax";
+        response.addHeader("Set-Cookie",
+                ResponseCookie.from("accessToken", tokens.getAccessToken())
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/")
+                        .maxAge(accessTokenExpiryMs / 1000)
+                        .sameSite(sameSite)
+                        .build().toHeaderValue());
+        response.addHeader("Set-Cookie",
+                ResponseCookie.from("refreshToken", tokens.getRefreshToken())
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/api/v1/auth")
+                        .maxAge(refreshTokenExpiryMs / 1000)
+                        .sameSite(sameSite)
+                        .build().toHeaderValue());
+    }
+
+    private void clearTokenCookies(HttpServletResponse response) {
+        String sameSite = secureCookies ? "None" : "Lax";
+        response.addHeader("Set-Cookie",
+                ResponseCookie.from("accessToken", "")
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/")
+                        .maxAge(0)
+                        .sameSite(sameSite)
+                        .build().toHeaderValue());
+        response.addHeader("Set-Cookie",
+                ResponseCookie.from("refreshToken", "")
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/api/v1/auth")
+                        .maxAge(0)
+                        .sameSite(sameSite)
+                        .build().toHeaderValue());
     }
 }
