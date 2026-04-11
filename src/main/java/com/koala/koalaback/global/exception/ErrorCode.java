@@ -69,6 +69,8 @@ public enum ErrorCode {
     // File
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "F001", "파일 업로드에 실패했습니다."),
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F002", "지원하지 않는 파일 형식입니다."),
+    FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "F003", "파일 크기가 허용 범위를 초과했습니다."),
+    INVALID_FILE_SIGNATURE(HttpStatus.BAD_REQUEST, "F004", "파일 내용이 확장자와 일치하지 않습니다."),
 
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "U006", "이미 사용 중인 이메일입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "U007", "이메일 또는 비밀번호가 올바르지 않습니다."),

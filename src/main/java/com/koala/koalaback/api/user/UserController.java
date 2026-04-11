@@ -35,21 +35,21 @@ public class UserController {
 
     @PostMapping("/api/v1/auth/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<Void> signup(
+    public ApiResponse<UserDto.TokenResponse> signup(
             @Valid @RequestBody UserDto.SignupRequest req,
             HttpServletResponse response) {
         UserDto.TokenResponse tokens = userService.signup(req);
         setTokenCookies(response, tokens);
-        return ApiResponse.ok();
+        return ApiResponse.ok(tokens);
     }
 
     @PostMapping("/api/v1/auth/login")
-    public ApiResponse<Void> login(
+    public ApiResponse<UserDto.TokenResponse> login(
             @Valid @RequestBody UserDto.LoginRequest req,
             HttpServletResponse response) {
         UserDto.TokenResponse tokens = userService.login(req);
         setTokenCookies(response, tokens);
-        return ApiResponse.ok();
+        return ApiResponse.ok(tokens);
     }
 
     @PostMapping("/api/v1/auth/refresh")
@@ -154,7 +154,7 @@ public class UserController {
                         .path("/")
                         .maxAge(accessTokenExpiryMs / 1000)
                         .sameSite(sameSite)
-                        .build().toHeaderValue());
+                        .build().toString());
         response.addHeader("Set-Cookie",
                 ResponseCookie.from("refreshToken", tokens.getRefreshToken())
                         .httpOnly(true)
@@ -162,7 +162,7 @@ public class UserController {
                         .path("/api/v1/auth")
                         .maxAge(refreshTokenExpiryMs / 1000)
                         .sameSite(sameSite)
-                        .build().toHeaderValue());
+                        .build().toString());
     }
 
     private void clearTokenCookies(HttpServletResponse response) {
@@ -174,7 +174,7 @@ public class UserController {
                         .path("/")
                         .maxAge(0)
                         .sameSite(sameSite)
-                        .build().toHeaderValue());
+                        .build().toString());
         response.addHeader("Set-Cookie",
                 ResponseCookie.from("refreshToken", "")
                         .httpOnly(true)
@@ -182,6 +182,6 @@ public class UserController {
                         .path("/api/v1/auth")
                         .maxAge(0)
                         .sameSite(sameSite)
-                        .build().toHeaderValue());
+                        .build().toString());
     }
 }

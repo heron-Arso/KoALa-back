@@ -65,7 +65,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                         .path("/")
                         .maxAge(accessTokenExpiryMs / 1000)
                         .sameSite(sameSite)
-                        .build().toHeaderValue());
+                        .build().toString());
         response.addHeader("Set-Cookie",
                 ResponseCookie.from("refreshToken", refreshToken)
                         .httpOnly(true)
@@ -73,7 +73,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                         .path("/api/v1/auth")
                         .maxAge(expirySeconds)
                         .sameSite(sameSite)
-                        .build().toHeaderValue());
+                        .build().toString());
 
         log.info("OAuth2 login success: userId={}", user.getId());
         getRedirectStrategy().sendRedirect(request, response, redirectUri);

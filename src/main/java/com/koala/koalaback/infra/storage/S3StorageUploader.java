@@ -112,13 +112,7 @@ public class S3StorageUploader {
     }
 
     private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "파일이 비어있습니다.");
-        }
-        String contentType = file.getContentType();
-        if (contentType == null || (!contentType.startsWith("image/")
-                && !contentType.startsWith("video/"))) {
-            throw new BusinessException(ErrorCode.INVALID_FILE_TYPE);
-        }
+        // Content-Type(1차) + 매직바이트(2차) + 크기 검증
+        FileValidator.validateImageOrVideo(file);
     }
 }

@@ -41,7 +41,7 @@ public class UserService {
                 .email(req.getEmail())
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .name(req.getName())
-                .phone(req.getPhone())
+                .phone(formatPhoneToE164(req.getPhone()))
                 .build();
 
         userRepository.save(user);
@@ -115,9 +115,10 @@ public class UserService {
     public UserDto.ProfileResponse updateProfile(Long userId,
                                                  UserDto.UpdateProfileRequest req) {
         User user = getUserById(userId);
+        String formattedPhone = req.getPhone() != null ? formatPhoneToE164(req.getPhone()) : user.getPhone();
         user.updateProfile(
                 req.getName() != null ? req.getName() : user.getName(),
-                req.getPhone() != null ? req.getPhone() : user.getPhone()
+                formattedPhone
         );
         return UserDto.ProfileResponse.from(user);
     }
@@ -230,6 +231,37 @@ public class UserService {
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * 전화번호를 E.164 국제 표준 형식으로 변환
+     * 예: "010-7748-8672" → "+821077488672"
+     * 예: "+82107748672" → "+821077488672" (그대로 유지)
+     */
+    private String formatPhoneToE164(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return null;
+        }
+
+        // 숫자만 추출
+        String cleaned = phone.replaceAll("[^0-9]", "");
+
+        // 빈 문자열이면 null 반환
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+
+        // 0으로 시작하는 한국 로컬 번호면 +82로 변환 (첫 0 제거)
+        if (cleaned.startsWith("0")) {
+            return "+82" + cleaned.substring(1);
+        }
+
+        // 이미 +로 시작하거나 다른 국가 코드면 그대로 반환
+        if (cleaned.length() < 10) {
+            return null; // 너무 짧은 번호는 null
+        }
+
+        return "+" + cleaned;
     }
 
     // ── 토큰 발급 공통 로직 ───────────────────────────────
