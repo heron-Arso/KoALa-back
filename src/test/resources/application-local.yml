@@ -2,10 +2,13 @@ server:
   port: 8081
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
+
   datasource:
     url: jdbc:mysql://localhost:3306/KoALa?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
-    username: rexyoon
-    password: 1234
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -22,13 +25,13 @@ spring:
     redis:
       host: localhost
       port: 6379
-      password:
+      password: ${REDIS_PASSWORD:}
 
   mail:
     host: smtp.gmail.com
     port: 587
-    username: test@example.com
-    password: test-password
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -42,16 +45,16 @@ spring:
       client:
         registration:
           kakao:
-            client-id: local-kakao-client-id
-            client-secret: local-kakao-client-secret
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
             authorization-grant-type: authorization_code
             scope:
               - profile_nickname
               - account_email
           naver:
-            client-id: local-naver-client-id
-            client-secret: local-naver-client-secret
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
             redirect-uri: "{baseUrl}/login/oauth2/code/naver"
             authorization-grant-type: authorization_code
             scope:
@@ -70,28 +73,28 @@ spring:
             user-name-attribute: response
 
 oauth2:
-  redirect-uri: http://localhost:3000/oauth2/callback
+  redirect-uri: http://localhost:5173/oauth2/callback
 
 jwt:
-  secret: local-dev-secret-key-must-be-at-least-32-characters-long-1234567890
+  secret: ${JWT_SECRET}
   access-token-expiry-ms: 1800000
   refresh-token-expiry-ms: 604800000
 
 cloud:
   aws:
     s3:
-      bucket: local-bucket
+      bucket: ${AWS_S3_BUCKET:local-bucket}
     region:
       static: ap-northeast-2
     credentials:
-      access-key: local-access-key
-      secret-key: local-secret-key
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
 
 koala:
   cdn-base-url: http://localhost:8080
 
 toss:
-  secret-key: test_sk_placeholder
+  secret-key: ${TOSS_SECRET_KEY}
 
 logging:
   level:

@@ -39,3 +39,10 @@ out/
 .env
 .env.*
 *.env
+!.env.example
+.env.properties
+!.env.properties.example
+
+# 로컬 개발 설정 (민감 정보 포함 가능)
+src/main/resources/application-local.yml
+src/test/resources/application-local.yml
