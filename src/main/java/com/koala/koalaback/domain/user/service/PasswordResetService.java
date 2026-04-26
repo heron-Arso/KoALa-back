@@ -85,10 +85,18 @@ public class PasswordResetService {
     }
 
     // ── 코드 생성 ─────────────────────────────────────────
+    // 6자리 숫자(10^6 = 100만 가지)에서 8자리 영숫자(36^8 ≈ 2.8조 가지)로 변경
+    // 브루트포스 공격 저항성 대폭 향상
+
+    private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int TOKEN_LENGTH = 8;
 
     private String generateCode() {
         SecureRandom random = new SecureRandom();
-        int code = 100000 + random.nextInt(900000);
-        return String.valueOf(code);
+        StringBuilder sb = new StringBuilder(TOKEN_LENGTH);
+        for (int i = 0; i < TOKEN_LENGTH; i++) {
+            sb.append(ALPHANUMERIC.charAt(random.nextInt(ALPHANUMERIC.length())));
+        }
+        return sb.toString();
     }
 }

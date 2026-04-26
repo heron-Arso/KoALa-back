@@ -31,10 +31,11 @@ public class TossPaymentProvider implements PaymentProvider {
     public PaymentConfirmResult confirm(String paymentKey, String orderId, BigDecimal amount) {
         try {
             HttpHeaders headers = buildHeaders();
+            // Toss API: KRW는 소수점 없는 정수(Long) 필수 — BigDecimal 그대로 전송 시 오류
             Map<String, Object> body = Map.of(
                     "paymentKey", paymentKey,
                     "orderId", orderId,
-                    "amount", amount
+                    "amount", amount.longValue()
             );
             ResponseEntity<Map> response = restTemplate.exchange(
                     TOSS_API_BASE + "/confirm",

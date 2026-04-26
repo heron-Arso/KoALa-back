@@ -23,6 +23,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -103,7 +105,25 @@ public class SecurityConfig {
                         auth.requestMatchers("/admin/api/**").hasRole("ADMIN");
                         auth.anyRequest().authenticated();
                 })
+                // ── 인증 실패 처리 ────────────────────────────────────────
+                // oauth2Login의 기본 동작은 미인증 요청을 OAuth2 로그인 페이지로 302 리다이렉트.
+                // API 요청(/api/**)은 리다이렉트 대신 401 JSON을 반환해야 함.
+                // 그렇지 않으면 Axios가 Kakao HTML 페이지를 응답으로 받고
+                // res.data.data 가 undefined 가 되어 프론트 에러 발생.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"success\":false,\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요합니다.\"}}"
+                            );
+                        })
+                )
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(auth -> auth
+                                .baseUri("/oauth2/authorization"))
+                        .redirectionEndpoint(redir -> redir
+                                .baseUri("/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
@@ -121,13 +141,27 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "capacitor://localhost",
-                "http://localhost"
-        ));
+
+        if (isProd) {
+            // 프로덕션: 실제 도메인만 허용 (localhost 제외)
+            config.setAllowedOriginPatterns(List.of(
+                    "https://koala-art.co.kr",
+                    "https://www.koala-art.co.kr",
+                    "capacitor://localhost"   // Capacitor 모바일 앱 (네이티브 WebView)
+            ));
+        } else {
+            // 로컬/개발: localhost 개발 서버 허용
+            config.setAllowedOriginPatterns(List.of(
+                    "http://localhost:3000",
+                    "http://localhost:5173",
+                    "capacitor://localhost",
+                    "http://localhost"
+            ));
+        }
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of(
                 "Content-Type",

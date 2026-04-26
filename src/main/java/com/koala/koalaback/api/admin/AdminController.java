@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,12 +28,14 @@ public class AdminController {
         return ApiResponse.ok(adminService.login(req, httpReq));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/me")
     public ApiResponse<AdminDto.AdminResponse> getMyInfo(
             @AuthenticationPrincipal Long adminId) {
         return ApiResponse.ok(adminService.getMyInfo(adminId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/skus/stock-adjust")
     public ApiResponse<Void> adjustStock(
             @AuthenticationPrincipal Long adminId,
@@ -42,6 +45,7 @@ public class AdminController {
         return ApiResponse.ok();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/audit-logs")
     public ApiResponse<PageResponse<AdminAuditLog>> getAuditLogs(
             @AuthenticationPrincipal Long adminId,

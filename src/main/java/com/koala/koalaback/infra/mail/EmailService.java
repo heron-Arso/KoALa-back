@@ -48,7 +48,7 @@ public class EmailService {
                             인증 코드는 <strong>5분간</strong> 유효합니다.
                         </p>
                         <div style="background: #F3F4F6; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 32px;">
-                            <span style="font-size: 40px; font-weight: bold; letter-spacing: 8px; color: #000000;">%s</span>
+                            <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #000000; font-family: monospace;">%s</span>
                         </div>
                         <p style="color: #9CA3AF; font-size: 12px; text-align: center;">
                             본인이 요청하지 않은 경우 이 이메일을 무시하세요.
