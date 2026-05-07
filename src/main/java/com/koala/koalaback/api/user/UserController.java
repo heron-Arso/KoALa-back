@@ -5,6 +5,7 @@ import com.koala.koalaback.domain.user.service.UserService;
 import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.response.ApiResponse;
+import com.koala.koalaback.global.security.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Value("${jwt.access-token-expiry-ms:1800000}")
     private long accessTokenExpiryMs;
@@ -67,8 +69,12 @@ public class UserController {
     @PostMapping("/api/v1/auth/logout")
     public ApiResponse<Void> logout(
             @AuthenticationPrincipal Long userId,
+            @CookieValue(name = "accessToken", required = false) String accessToken,
             HttpServletResponse response) {
         userService.logout(userId);
+        if (accessToken != null) {
+            tokenBlacklistService.blacklist(accessToken);
+        }
         clearTokenCookies(response);
         return ApiResponse.ok();
     }

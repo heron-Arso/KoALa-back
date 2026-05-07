@@ -25,6 +25,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtProvider jwtProvider;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -32,7 +33,8 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = resolveToken(request);
 
-        if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
+        if (StringUtils.hasText(token) && jwtProvider.validateToken(token)
+                && !tokenBlacklistService.isBlacklisted(token)) {
             try {
                 Long userId = jwtProvider.getUserId(token);
                 String role = jwtProvider.getRole(token);

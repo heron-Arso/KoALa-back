@@ -84,4 +84,13 @@ public class JwtProvider {
             return false;
         }
     }
+
+    public long getRemainingExpiryMs(String token) {
+        try {
+            long expiry = getClaims(token).getExpiration().getTime() - System.currentTimeMillis();
+            return Math.max(0, expiry);
+        } catch (BusinessException e) {
+            return 0;
+        }
+    }
 }

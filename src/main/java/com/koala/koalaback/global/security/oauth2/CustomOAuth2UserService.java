@@ -33,10 +33,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory
                 .getOAuth2UserInfo(provider, oAuth2User.getAttributes());
 
-        // 기존 소셜 회원 조회 → 없으면 자동 회원가입
+        // 1) 소셜 ID로 기존 회원 조회
+        // 2) 없으면 이메일로 조회 → 일반 회원가입 계정에 OAuth 연결
+        // 3) 둘 다 없으면 신규 가입
         User user = userRepository
                 .findByOauthProviderAndOauthId(provider, userInfo.getOauthId())
-                .orElseGet(() -> registerNewOAuthUser(userInfo));
+                .orElseGet(() -> userRepository.findByEmail(userInfo.getEmail())
+                        .map(existing -> {
+                            existing.linkOAuth(provider, userInfo.getOauthId());
+                            log.info("OAuth2 linked to existing account: email={}, provider={}", userInfo.getEmail(), provider);
+                            return existing;
+                        })
+                        .orElseGet(() -> registerNewOAuthUser(userInfo)));
 
         // 이름 최신화
         user.updateOAuthInfo(userInfo.getName());

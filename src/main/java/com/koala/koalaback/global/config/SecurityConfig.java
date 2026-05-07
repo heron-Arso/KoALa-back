@@ -2,6 +2,8 @@ package com.koala.koalaback.global.config;
 
 import com.koala.koalaback.global.security.JwtFilter;
 import com.koala.koalaback.global.security.JwtProvider;
+import com.koala.koalaback.global.security.RateLimitFilter;
+import com.koala.koalaback.global.security.TokenBlacklistService;
 import com.koala.koalaback.global.security.oauth2.CustomOAuth2UserService;
 import com.koala.koalaback.global.security.oauth2.OAuth2FailureHandler;
 import com.koala.koalaback.global.security.oauth2.OAuth2SuccessHandler;
@@ -35,6 +37,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
+    private final TokenBlacklistService tokenBlacklistService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
@@ -102,6 +105,7 @@ public class SecurityConfig {
                         }
 
                         auth.requestMatchers("/actuator/health").permitAll();
+                        auth.requestMatchers("/error").permitAll();
                         auth.requestMatchers("/admin/api/**").hasRole("ADMIN");
                         auth.anyRequest().authenticated();
                 })
@@ -129,8 +133,10 @@ public class SecurityConfig {
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler)
                 )
-                .addFilterBefore(new JwtFilter(jwtProvider),
+                .addFilterBefore(new JwtFilter(jwtProvider, tokenBlacklistService),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new RateLimitFilter(),
+                        JwtFilter.class)
                 .build();
     }
 

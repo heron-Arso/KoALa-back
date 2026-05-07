@@ -94,6 +94,11 @@ public class User extends BaseTimeEntity {
         this.name = name;
     }
 
+    public void linkOAuth(String provider, String oauthId) {
+        this.oauthProvider = provider;
+        this.oauthId = oauthId;
+    }
+
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
         this.status = "INACTIVE";
