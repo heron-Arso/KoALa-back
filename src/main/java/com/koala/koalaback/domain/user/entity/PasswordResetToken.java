@@ -17,7 +17,7 @@ public class PasswordResetToken {
     private Long id;
     @Column(nullable = false, length = 255)
     private String email;
-    @Column(nullable = false, length = 6)
+    @Column(nullable = false, length = 64)
     private String token;
     @Column(nullable = false)
     private boolean isUsed;

@@ -54,12 +54,6 @@ public class PaymentWebhookController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing webhook signature");
         }
 
-        // 더미 시크릿(로컬 개발)일 경우 서명 검증 건너뜀
-        if (tossWebhookSecret.startsWith("dummy")) {
-            log.warn("[Webhook] 더미 시크릿 사용 중 — 서명 검증 생략 (개발 환경 전용)");
-            return;
-        }
-
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(
