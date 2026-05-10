@@ -5,12 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
@@ -52,8 +55,14 @@ public class TossPaymentProvider implements PaymentProvider {
                     res.toString(),
                     null, null
             );
+        } catch (HttpClientErrorException e) {
+            String body = e.getResponseBodyAsString();
+            String code = extractJsonField(body, "code");
+            String msg  = extractJsonField(body, "message");
+            log.error("Toss confirm rejected: orderId={}, code={}, message={}", orderId, code, msg);
+            return new PaymentConfirmResult(false, null, null, null, null, code, msg);
         } catch (Exception e) {
-            log.error("Toss confirm failed: orderId={}, error={}", orderId, e.getMessage());
+            log.error("Toss confirm error: orderId={}, error={}", orderId, e.getMessage());
             return new PaymentConfirmResult(
                     false, null, null, null, null, "TOSS_ERROR", e.getMessage());
         }
@@ -76,11 +85,24 @@ public class TossPaymentProvider implements PaymentProvider {
             );
             Map<String, Object> res = response.getBody();
             return new PaymentCancelResult(true, cancelAmount, res.toString(), null, null);
+        } catch (HttpClientErrorException e) {
+            String body = e.getResponseBodyAsString();
+            String code = extractJsonField(body, "code");
+            String msg  = extractJsonField(body, "message");
+            log.error("Toss cancel rejected: pgTransactionId={}, code={}, message={}", pgTransactionId, code, msg);
+            return new PaymentCancelResult(false, null, null, code, msg);
         } catch (Exception e) {
-            log.error("Toss cancel failed: pgTransactionId={}, error={}", pgTransactionId, e.getMessage());
+            log.error("Toss cancel error: pgTransactionId={}, error={}", pgTransactionId, e.getMessage());
             return new PaymentCancelResult(
                     false, null, null, "TOSS_CANCEL_ERROR", e.getMessage());
         }
+    }
+
+    /** Toss 에러 응답 JSON에서 특정 필드 값 추출 */
+    private String extractJsonField(String json, String field) {
+        if (json == null || json.isBlank()) return null;
+        Matcher m = Pattern.compile("\"" + field + "\"\\s*:\\s*\"([^\"]+)\"").matcher(json);
+        return m.find() ? m.group(1) : null;
     }
 
     private HttpHeaders buildHeaders() {

@@ -3,8 +3,10 @@ package com.koala.koalaback.domain.payment.dto;
 import com.koala.koalaback.domain.payment.entity.Payment;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,6 +38,8 @@ public class PaymentDto {
     }
 
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CancelRequest {
         @NotBlank
         private String reason;

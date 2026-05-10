@@ -1,7 +1,7 @@
 package com.koala.koalaback.domain.payment.service;
 
 import com.koala.koalaback.domain.order.entity.Order;
-import com.koala.koalaback.domain.order.service.OrderService;
+import com.koala.koalaback.domain.order.repository.OrderRepository;
 import com.koala.koalaback.domain.payment.dto.PaymentDto;
 import com.koala.koalaback.domain.payment.entity.Payment;
 import com.koala.koalaback.domain.payment.entity.PaymentEvent;
@@ -27,13 +27,14 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentEventRepository paymentEventRepository;
-    private final OrderService orderService;
+    private final OrderRepository orderRepository;
     private final CodeGenerator codeGenerator;
     private final List<PaymentProvider> providers;
 
     @Transactional
     public PaymentDto.PrepareResponse prepare(Long userId, PaymentDto.PrepareRequest req) {
-        Order order = orderService.getOrderEntityByNo(req.getOrderNo());
+        Order order = orderRepository.findByOrderNo(req.getOrderNo())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         if (!order.getUser().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
@@ -64,7 +65,8 @@ public class PaymentService {
 
     @Transactional
     public PaymentDto.PaymentResponse confirm(Long userId, PaymentDto.ConfirmRequest req) {
-        Order order = orderService.getOrderEntityByNo(req.getOrderNo());
+        Order order = orderRepository.findByOrderNo(req.getOrderNo())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         if (!order.getUser().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);

@@ -10,6 +10,9 @@ import com.koala.koalaback.domain.order.entity.OrderShipment;
 import com.koala.koalaback.domain.order.repository.OrderItemRepository;
 import com.koala.koalaback.domain.order.repository.OrderRepository;
 import com.koala.koalaback.domain.order.repository.OrderShipmentRepository;
+import com.koala.koalaback.domain.payment.dto.PaymentDto;
+import com.koala.koalaback.domain.payment.repository.PaymentRepository;
+import com.koala.koalaback.domain.payment.service.PaymentService;
 import com.koala.koalaback.domain.sku.entity.Sku;
 import com.koala.koalaback.domain.sku.service.StockService;
 import com.koala.koalaback.domain.user.service.UserService;
@@ -39,6 +42,8 @@ public class OrderService {
     private final CartService cartService;
     private final StockService stockService;
     private final UserService userService;
+    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
     private final CodeGenerator codeGenerator;
     private final PhoneNormalizer phoneNormalizer;
 
@@ -154,6 +159,22 @@ public class OrderService {
 
         order.cancel();
         log.info("Order cancelled: orderNo={}, userId={}", orderNo, userId);
+
+        // 결제 환불 자동 연동 — CAPTURED 상태 결제만 환불
+        paymentRepository.findTopByOrderIdOrderByCreatedAtDesc(order.getId())
+                .filter(p -> "CAPTURED".equals(p.getStatus()))
+                .ifPresent(p -> {
+                    try {
+                        paymentService.cancel(p.getPaymentNo(),
+                                new PaymentDto.CancelRequest("주문취소", null));
+                        log.info("Payment refunded on order cancel: paymentNo={}", p.getPaymentNo());
+                    } catch (Exception e) {
+                        // 주문 취소는 성공 처리, 환불 실패는 로그로 추적 후 수동 처리
+                        log.warn("Payment refund failed (manual action required): paymentNo={}, error={}",
+                                p.getPaymentNo(), e.getMessage());
+                    }
+                });
+
         return OrderDto.OrderDetailResponse.from(order);
     }
 
