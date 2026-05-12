@@ -1,5 +1,6 @@
 package com.koala.koalaback.global.config;
 
+import com.koala.koalaback.global.security.AdminIpAllowlistFilter;
 import com.koala.koalaback.global.security.JwtFilter;
 import com.koala.koalaback.global.security.JwtProvider;
 import com.koala.koalaback.global.security.RateLimitFilter;
@@ -8,6 +9,7 @@ import com.koala.koalaback.global.security.oauth2.CustomOAuth2UserService;
 import com.koala.koalaback.global.security.oauth2.OAuth2FailureHandler;
 import com.koala.koalaback.global.security.oauth2.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -43,6 +45,9 @@ public class SecurityConfig {
     private final OAuth2FailureHandler oAuth2FailureHandler;
     private final Environment environment;
 
+    @Value("${admin.allowed-ips:}")
+    private String adminAllowedIps;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
@@ -64,11 +69,15 @@ public class SecurityConfig {
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
                                         "default-src 'self'; " +
-                                        "script-src 'self'; " +
+                                        "script-src 'self' https://*.tosspayments.com https://*.toss.im; " +
                                         "style-src 'self' 'unsafe-inline'; " +
                                         "img-src 'self' data: https:; " +
                                         "font-src 'self' data:; " +
-                                        "connect-src 'self'; " +
+                                        // Sentry 에러 전송 + Toss 결제 API 허용
+                                        "connect-src 'self' https://*.sentry.io https://*.ingest.sentry.io " +
+                                                "https://*.tosspayments.com https://*.toss.im; " +
+                                        // Toss 결제 위젯은 iframe 사용
+                                        "frame-src https://*.tosspayments.com https://*.toss.im; " +
                                         "frame-ancestors 'none'; " +
                                         "upgrade-insecure-requests"
                                 )
@@ -92,6 +101,9 @@ public class SecurityConfig {
                                 "/api/v1/artists/**",
                                 "/api/v1/skus/**",
                                 "/api/v1/banners/**").permitAll();
+                        // 팔로우/언팔로우는 로그인 필수
+                        auth.requestMatchers(HttpMethod.POST, "/api/v1/artists/*/follow").authenticated();
+                        auth.requestMatchers(HttpMethod.DELETE, "/api/v1/artists/*/follow").authenticated();
                         auth.requestMatchers(
                                 "/oauth2/**",
                                 "/login/oauth2/**").permitAll();
@@ -137,6 +149,8 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new RateLimitFilter(),
                         JwtFilter.class)
+                .addFilterBefore(new AdminIpAllowlistFilter(adminAllowedIps),
+                        RateLimitFilter.class)
                 .build();
     }
 

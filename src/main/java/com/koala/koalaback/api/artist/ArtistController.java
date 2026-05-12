@@ -7,6 +7,8 @@ import com.koala.koalaback.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,9 +24,29 @@ public class ArtistController {
         return ApiResponse.ok(artistService.getArtists(pageable));
     }
 
+    // 비로그인 사용자도 조회 가능 (followCount 포함, isFollowing은 false)
     @GetMapping("/{artistCode}")
     public ApiResponse<ArtistDto.DetailResponse> getArtist(
-            @PathVariable String artistCode) {
-        return ApiResponse.ok(artistService.getArtist(artistCode));
+            @PathVariable String artistCode,
+            @AuthenticationPrincipal(required = false) Long userId) {
+        return ApiResponse.ok(artistService.getArtist(artistCode, userId));
+    }
+
+    @PostMapping("/{artistCode}/follow")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> follow(
+            @PathVariable String artistCode,
+            @AuthenticationPrincipal Long userId) {
+        artistService.follow(artistCode, userId);
+        return ApiResponse.ok();
+    }
+
+    @DeleteMapping("/{artistCode}/follow")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> unfollow(
+            @PathVariable String artistCode,
+            @AuthenticationPrincipal Long userId) {
+        artistService.unfollow(artistCode, userId);
+        return ApiResponse.ok();
     }
 }

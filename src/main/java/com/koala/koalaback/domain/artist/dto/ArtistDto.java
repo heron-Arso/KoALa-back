@@ -72,8 +72,11 @@ public class ArtistDto {
         private String profileImageUrl;
         private Boolean isActive;
         private List<MediaResponse> mediaList;
+        private long followCount;
+        private boolean isFollowing;
 
-        public static DetailResponse from(Artist a, List<ArtistMedia> media) {
+        public static DetailResponse from(Artist a, List<ArtistMedia> media,
+                                          long followCount, boolean isFollowing) {
             return DetailResponse.builder()
                     .id(a.getId())
                     .artistCode(a.getArtistCode())
@@ -83,6 +86,8 @@ public class ArtistDto {
                     .profileImageUrl(a.getProfileImageUrl())
                     .isActive(a.getIsActive())
                     .mediaList(media.stream().map(MediaResponse::from).toList())
+                    .followCount(followCount)
+                    .isFollowing(isFollowing)
                     .build();
         }
     }

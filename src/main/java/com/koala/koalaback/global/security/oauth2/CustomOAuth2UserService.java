@@ -3,6 +3,7 @@ package com.koala.koalaback.global.security.oauth2;
 import com.koala.koalaback.domain.user.entity.User;
 import com.koala.koalaback.domain.user.repository.UserRepository;
 import com.koala.koalaback.global.util.CodeGenerator;
+import com.koala.koalaback.global.util.PiiMasker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -41,7 +42,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .orElseGet(() -> userRepository.findByEmail(userInfo.getEmail())
                         .map(existing -> {
                             existing.linkOAuth(provider, userInfo.getOauthId());
-                            log.info("OAuth2 linked to existing account: email={}, provider={}", userInfo.getEmail(), provider);
+                            log.info("OAuth2 linked to existing account: email={}, provider={}", PiiMasker.email(userInfo.getEmail()), provider);
                             return existing;
                         })
                         .orElseGet(() -> registerNewOAuthUser(userInfo)));
@@ -56,7 +57,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private User registerNewOAuthUser(OAuth2UserInfo userInfo) {
         log.info("New OAuth2 user: provider={}, email={}",
-                userInfo.getProvider(), userInfo.getEmail());
+                userInfo.getProvider(), PiiMasker.email(userInfo.getEmail()));
 
         return userRepository.save(
                 User.createOAuthUser(

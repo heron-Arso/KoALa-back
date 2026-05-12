@@ -5,6 +5,7 @@ import com.koala.koalaback.domain.admin.entity.AdminAuditLog;
 import com.koala.koalaback.domain.admin.service.AdminService;
 import com.koala.koalaback.global.response.ApiResponse;
 import com.koala.koalaback.global.response.PageResponse;
+import com.koala.koalaback.global.security.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,12 +21,21 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/auth/login")
     public ApiResponse<AdminDto.TokenResponse> login(
             @Valid @RequestBody AdminDto.LoginRequest req,
             HttpServletRequest httpReq) {
         return ApiResponse.ok(adminService.login(req, httpReq));
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/auth/logout")
+    public ApiResponse<Void> logout(
+            @RequestHeader("Authorization") String bearerToken) {
+        String token = bearerToken.replace("Bearer ", "").trim();
+        tokenBlacklistService.blacklist(token);
+        return ApiResponse.ok(null);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

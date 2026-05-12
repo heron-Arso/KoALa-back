@@ -61,7 +61,7 @@ public class AdminService {
                 httpReq.getRequestURI(), httpReq.getMethod(),
                 httpReq.getRemoteAddr(), null, null, null);
 
-        log.info("Admin login: adminId={}, loginId={}", admin.getId(), admin.getLoginId());
+        log.info("Admin login: adminId={}", admin.getId());
         return new AdminDto.TokenResponse(token);
     }
 

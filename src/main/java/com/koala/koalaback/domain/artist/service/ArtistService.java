@@ -2,7 +2,9 @@ package com.koala.koalaback.domain.artist.service;
 
 import com.koala.koalaback.domain.artist.dto.ArtistDto;
 import com.koala.koalaback.domain.artist.entity.Artist;
+import com.koala.koalaback.domain.artist.entity.ArtistFollow;
 import com.koala.koalaback.domain.artist.entity.ArtistMedia;
+import com.koala.koalaback.domain.artist.repository.ArtistFollowRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistMediaRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistRepository;
 import com.koala.koalaback.global.exception.BusinessException;
@@ -23,6 +25,7 @@ public class ArtistService {
 
     private final ArtistRepository artistRepository;
     private final ArtistMediaRepository artistMediaRepository;
+    private final ArtistFollowRepository artistFollowRepository;
     private final CodeGenerator codeGenerator;
 
     // ── 유저용 ────────────────────────────────────────────
@@ -34,11 +37,30 @@ public class ArtistService {
         );
     }
 
-    public ArtistDto.DetailResponse getArtist(String artistCode) {
+    public ArtistDto.DetailResponse getArtist(String artistCode, Long userId) {
         Artist artist = getArtistEntityByCode(artistCode);
         List<ArtistMedia> media = artistMediaRepository
                 .findByArtistIdOrderBySortOrderAsc(artist.getId());
-        return ArtistDto.DetailResponse.from(artist, media);
+        long followCount = artistFollowRepository.countByArtistId(artist.getId());
+        boolean isFollowing = userId != null &&
+                artistFollowRepository.existsByUserIdAndArtistId(userId, artist.getId());
+        return ArtistDto.DetailResponse.from(artist, media, followCount, isFollowing);
+    }
+
+    @Transactional
+    public void follow(String artistCode, Long userId) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        if (!artistFollowRepository.existsByUserIdAndArtistId(userId, artist.getId())) {
+            artistFollowRepository.save(
+                    ArtistFollow.builder().userId(userId).artist(artist).build());
+        }
+    }
+
+    @Transactional
+    public void unfollow(String artistCode, Long userId) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        artistFollowRepository.findByUserIdAndArtistId(userId, artist.getId())
+                .ifPresent(artistFollowRepository::delete);
     }
 
     // ── 어드민용 ──────────────────────────────────────────
