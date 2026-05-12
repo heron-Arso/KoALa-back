@@ -5,7 +5,7 @@ import com.koala.koalaback.domain.order.entity.Order;
 import com.koala.koalaback.domain.order.entity.OrderItem;
 import com.koala.koalaback.domain.sku.entity.Sku;
 import com.koala.koalaback.domain.user.entity.User;
-import com.koala.koalaback.global.config.BaseTimeEntity;
+import com.koala.koalaback.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 

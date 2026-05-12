@@ -12,6 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * TODO: 현재 ArtworkController 및 외부 참조 없음.
+ * SKU 도메인으로 통합하거나 별도 API 엔드포인트 추가 필요.
+ * artworks 테이블 사용 여부 확인 후 정리 예정.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

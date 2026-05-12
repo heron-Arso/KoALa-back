@@ -1,7 +1,7 @@
 package com.koala.koalaback.domain.sku.entity;
 
 import com.koala.koalaback.domain.artist.entity.Artist;
-import com.koala.koalaback.global.config.BaseTimeEntity;
+import com.koala.koalaback.global.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
