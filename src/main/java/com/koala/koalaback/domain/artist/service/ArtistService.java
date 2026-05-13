@@ -2,8 +2,10 @@ package com.koala.koalaback.domain.artist.service;
 
 import com.koala.koalaback.domain.artist.dto.ArtistDto;
 import com.koala.koalaback.domain.artist.entity.Artist;
+import com.koala.koalaback.domain.artist.entity.ArtistCareer;
 import com.koala.koalaback.domain.artist.entity.ArtistFollow;
 import com.koala.koalaback.domain.artist.entity.ArtistMedia;
+import com.koala.koalaback.domain.artist.repository.ArtistCareerRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistFollowRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistMediaRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistRepository;
@@ -26,6 +28,7 @@ public class ArtistService {
     private final ArtistRepository artistRepository;
     private final ArtistMediaRepository artistMediaRepository;
     private final ArtistFollowRepository artistFollowRepository;
+    private final ArtistCareerRepository artistCareerRepository;
     private final CodeGenerator codeGenerator;
 
     // ── 유저용 ────────────────────────────────────────────
@@ -41,10 +44,12 @@ public class ArtistService {
         Artist artist = getArtistEntityByCode(artistCode);
         List<ArtistMedia> media = artistMediaRepository
                 .findByArtistIdOrderBySortOrderAsc(artist.getId());
+        List<ArtistCareer> careers = artistCareerRepository
+                .findByArtistIdOrderByCategoryAscSortOrderAsc(artist.getId());
         long followCount = artistFollowRepository.countByArtistId(artist.getId());
         boolean isFollowing = userId != null &&
                 artistFollowRepository.existsByUserIdAndArtistId(userId, artist.getId());
-        return ArtistDto.DetailResponse.from(artist, media, followCount, isFollowing);
+        return ArtistDto.DetailResponse.from(artist, media, careers, followCount, isFollowing);
     }
 
     @Transactional
@@ -72,6 +77,7 @@ public class ArtistService {
                 .name(req.getName())
                 .slug(req.getSlug())
                 .description(req.getDescription())
+                .artistNote(req.getArtistNote())
                 .profileImageUrl(req.getProfileImageUrl())
                 .build();
         return ArtistDto.SummaryResponse.from(artistRepository.save(artist));
@@ -81,7 +87,7 @@ public class ArtistService {
     public ArtistDto.SummaryResponse updateArtist(String artistCode, ArtistDto.UpdateRequest req) {
         Artist artist = getArtistEntityByCode(artistCode);
         artist.update(req.getName(), req.getSlug(),
-                req.getDescription(), req.getProfileImageUrl());
+                req.getDescription(), req.getArtistNote(), req.getProfileImageUrl());
         return ArtistDto.SummaryResponse.from(artist);
     }
 

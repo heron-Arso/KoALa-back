@@ -28,7 +28,7 @@ public class ArtistController {
     @GetMapping("/{artistCode}")
     public ApiResponse<ArtistDto.DetailResponse> getArtist(
             @PathVariable String artistCode,
-            @AuthenticationPrincipal(required = false) Long userId) {
+            @AuthenticationPrincipal Long userId) {
         return ApiResponse.ok(artistService.getArtist(artistCode, userId));
     }
 

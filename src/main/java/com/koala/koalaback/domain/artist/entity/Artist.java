@@ -30,6 +30,10 @@ public class Artist extends BaseTimeEntity {
     @Column(columnDefinition = "LONGTEXT")
     private String description;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String artistNote;
+
     @Column(length = 700)
     private String profileImageUrl;
 
@@ -42,22 +46,28 @@ public class Artist extends BaseTimeEntity {
     @OrderBy("sortOrder ASC")
     private List<ArtistMedia> mediaList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("category ASC, sortOrder ASC")
+    private List<ArtistCareer> careerList = new ArrayList<>();
+
     @Builder
     public Artist(String artistCode, String name, String slug,
-                  String description, String profileImageUrl) {
-        this.artistCode = artistCode;
-        this.name = name;
-        this.slug = slug;
-        this.description = description;
+                  String description, String artistNote, String profileImageUrl) {
+        this.artistCode      = artistCode;
+        this.name            = name;
+        this.slug            = slug;
+        this.description     = description;
+        this.artistNote      = artistNote;
         this.profileImageUrl = profileImageUrl;
-        this.isActive = true;
+        this.isActive        = true;
     }
 
     public void update(String name, String slug,
-                       String description, String profileImageUrl) {
-        this.name = name;
-        this.slug = slug;
-        this.description = description;
+                       String description, String artistNote, String profileImageUrl) {
+        this.name            = name;
+        this.slug            = slug;
+        this.description     = description;
+        this.artistNote      = artistNote;
         this.profileImageUrl = profileImageUrl;
     }
 

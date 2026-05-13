@@ -1,1 +1,6 @@
+plugins {
+    // Gradle 이 필요한 JDK(Java 21) 를 자동 다운로드/관리하도록 함
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'arsoback'
