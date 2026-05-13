@@ -13,10 +13,12 @@ import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.response.PageResponse;
 import com.koala.koalaback.global.util.CodeGenerator;
+import com.koala.koalaback.infra.storage.StorageUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class ArtistService {
     private final ArtistMediaRepository artistMediaRepository;
     private final ArtistFollowRepository artistFollowRepository;
     private final ArtistCareerRepository artistCareerRepository;
+    private final StorageUploader s3Uploader;
     private final CodeGenerator codeGenerator;
 
     // ── 유저용 ────────────────────────────────────────────
@@ -94,6 +97,93 @@ public class ArtistService {
     @Transactional
     public void deleteArtist(String artistCode) {
         getArtistEntityByCode(artistCode).softDelete();
+    }
+
+    // ── 미디어 관리 (어드민) ──────────────────────────────
+
+    @Transactional
+    public ArtistDto.MediaResponse addMedia(String artistCode,
+                                            MultipartFile file,
+                                            ArtistDto.MediaAddRequest req) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        String dir = "artists/" + artist.getArtistCode() + "/" + req.getMediaRole().toLowerCase();
+        String fileUrl = s3Uploader.upload(file, dir);
+
+        int nextOrder = req.getSortOrder() != null ? req.getSortOrder()
+                : artistMediaRepository.findByArtistIdOrderBySortOrderAsc(artist.getId()).size();
+
+        ArtistMedia media = ArtistMedia.builder()
+                .artist(artist)
+                .mediaType(req.getMediaType())
+                .mediaRole(req.getMediaRole())
+                .fileUrl(fileUrl)
+                .title(req.getTitle())
+                .sortOrder(nextOrder)
+                .build();
+        artistMediaRepository.save(media);
+
+        // 프로필 사진 업로드 시 artist.profileImageUrl 자동 동기화
+        if ("PROFILE".equals(req.getMediaRole())) {
+            artist.updateProfileImage(fileUrl);
+        }
+
+        return ArtistDto.MediaResponse.from(media);
+    }
+
+    @Transactional
+    public void deleteMedia(String artistCode, Long mediaId) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        ArtistMedia media = artistMediaRepository.findById(mediaId)
+                .filter(m -> m.getArtist().getId().equals(artist.getId()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        s3Uploader.delete(media.getFileUrl());
+        artistMediaRepository.delete(media);
+    }
+
+    public List<ArtistDto.MediaResponse> getMediaList(String artistCode) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        return artistMediaRepository
+                .findByArtistIdOrderBySortOrderAsc(artist.getId())
+                .stream().map(ArtistDto.MediaResponse::from).toList();
+    }
+
+    // ── 약력 관리 (어드민) ────────────────────────────────
+
+    @Transactional
+    public ArtistDto.CareerResponse addCareer(String artistCode, ArtistDto.CareerAddRequest req) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        int nextOrder = req.getSortOrder() != null ? req.getSortOrder()
+                : artistCareerRepository.findByArtistIdOrderByCategoryAscSortOrderAsc(artist.getId()).size();
+
+        ArtistCareer career = ArtistCareer.builder()
+                .artist(artist)
+                .category(req.getCategory())
+                .year(req.getYear())
+                .content(req.getContent())
+                .sortOrder(nextOrder)
+                .build();
+        return ArtistDto.CareerResponse.from(artistCareerRepository.save(career));
+    }
+
+    @Transactional
+    public ArtistDto.CareerResponse updateCareer(String artistCode, Long careerId,
+                                                  ArtistDto.CareerUpdateRequest req) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        ArtistCareer career = artistCareerRepository.findById(careerId)
+                .filter(c -> c.getArtist().getId().equals(artist.getId()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        career.update(req.getCategory(), req.getYear(), req.getContent(),
+                req.getSortOrder() != null ? req.getSortOrder() : career.getSortOrder());
+        return ArtistDto.CareerResponse.from(career);
+    }
+
+    @Transactional
+    public void deleteCareer(String artistCode, Long careerId) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        ArtistCareer career = artistCareerRepository.findById(careerId)
+                .filter(c -> c.getArtist().getId().equals(artist.getId()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        artistCareerRepository.delete(career);
     }
 
     // ── 공통 ──────────────────────────────────────────────

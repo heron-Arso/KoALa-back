@@ -9,8 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin/api/v1/skus")
@@ -57,6 +61,32 @@ public class AdminSkuController {
         skuService.deleteSku(skuCode);
         return ApiResponse.ok();
     }
+
+    // ── 미디어 관리 ───────────────────────────────────────
+
+    @GetMapping("/{skuCode}/media")
+    public ApiResponse<List<SkuDto.MediaResponse>> getMedia(@PathVariable String skuCode) {
+        return ApiResponse.ok(skuService.getMediaList(skuCode));
+    }
+
+    @PostMapping(value = "/{skuCode}/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<SkuDto.MediaResponse> addMedia(
+            @PathVariable String skuCode,
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("meta") @Valid SkuDto.MediaAddRequest req) {
+        return ApiResponse.ok(skuService.addMedia(skuCode, file, req));
+    }
+
+    @DeleteMapping("/{skuCode}/media/{mediaId}")
+    public ApiResponse<Void> deleteMedia(
+            @PathVariable String skuCode,
+            @PathVariable Long mediaId) {
+        skuService.deleteMedia(skuCode, mediaId);
+        return ApiResponse.ok();
+    }
+
+    // ── 360도 프레임 ──────────────────────────────────────
 
     @PostMapping("/{skuCode}/360-frames")
     public ApiResponse<SkuDto.FrameListResponse> upload360Frames(

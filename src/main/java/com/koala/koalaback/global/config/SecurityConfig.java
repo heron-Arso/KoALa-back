@@ -5,6 +5,7 @@ import com.koala.koalaback.global.security.JwtFilter;
 import com.koala.koalaback.global.security.JwtProvider;
 import com.koala.koalaback.global.security.RateLimitFilter;
 import com.koala.koalaback.global.security.TokenBlacklistService;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import com.koala.koalaback.global.security.oauth2.CustomOAuth2UserService;
 import com.koala.koalaback.global.security.oauth2.OAuth2FailureHandler;
 import com.koala.koalaback.global.security.oauth2.OAuth2SuccessHandler;
@@ -40,6 +41,7 @@ public class SecurityConfig {
 
     private final JwtProvider jwtProvider;
     private final TokenBlacklistService tokenBlacklistService;
+    private final RateLimitFilter rateLimitFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final OAuth2FailureHandler oAuth2FailureHandler;
@@ -109,6 +111,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**").permitAll();
                         auth.requestMatchers("/webhook/**").permitAll();
 
+                        // Admin 로그인은 인증 없이 허용 (나머지 /admin/api/**는 ADMIN 전용)
+                        auth.requestMatchers(HttpMethod.POST, "/admin/api/v1/auth/login").permitAll();
+
                         // Swagger: 프로덕션에서는 ADMIN 전용, 개발환경에서는 공개
                         if (isProd) {
                             auth.requestMatchers("/swagger-ui/**", "/api-docs/**").hasRole("ADMIN");
@@ -118,6 +123,7 @@ public class SecurityConfig {
 
                         auth.requestMatchers("/actuator/health").permitAll();
                         auth.requestMatchers("/error").permitAll();
+                        auth.requestMatchers("/uploads/**").permitAll(); // 로컬 개발용 정적 파일
                         auth.requestMatchers("/admin/api/**").hasRole("ADMIN");
                         auth.anyRequest().authenticated();
                 })
@@ -147,11 +153,22 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(new JwtFilter(jwtProvider, tokenBlacklistService),
                         UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new RateLimitFilter(),
+                .addFilterBefore(rateLimitFilter,
                         JwtFilter.class)
                 .addFilterBefore(new AdminIpAllowlistFilter(adminAllowedIps),
                         RateLimitFilter.class)
                 .build();
+    }
+
+    /**
+     * RateLimitFilter가 @Component이므로 Spring Boot가 Servlet 필터로 자동 등록함.
+     * Security 필터 체인에만 등록하고 Servlet 레벨 이중 실행을 방지.
+     */
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -175,8 +192,7 @@ public class SecurityConfig {
         } else {
             // 로컬/개발: localhost 개발 서버 허용
             config.setAllowedOriginPatterns(List.of(
-                    "http://localhost:3000",
-                    "http://localhost:5173",
+                    "http://localhost:[*]",   // 로컬 모든 포트 허용 (5173, 5174 등)
                     "capacitor://localhost",
                     "http://localhost"
             ));

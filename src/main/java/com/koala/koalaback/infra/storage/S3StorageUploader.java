@@ -5,6 +5,7 @@ import com.koala.koalaback.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -17,8 +18,9 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@Profile("!local")
 @RequiredArgsConstructor
-public class S3StorageUploader {
+public class S3StorageUploader implements StorageUploader {
 
     private final S3Client s3Client;
 
@@ -51,7 +53,7 @@ public class S3StorageUploader {
             log.info("S3 upload success: key={}", key);
             return cdnBaseUrl + "/" + key;
 
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             log.error("S3 upload failed: key={}", key, e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }

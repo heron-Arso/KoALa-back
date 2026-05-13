@@ -71,6 +71,10 @@ public class Artist extends BaseTimeEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
+    public void updateProfileImage(String url) {
+        this.profileImageUrl = url;
+    }
+
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
         this.isActive = false;

@@ -63,6 +63,20 @@ public class SkuDto {
         private String primaryImageUrl;
     }
 
+    /** 미디어 업로드 요청 (MAIN / DETAIL / GALLERY 이미지) */
+    @Getter
+    public static class MediaAddRequest {
+        @NotBlank
+        private String mediaType;   // IMAGE | VIDEO
+
+        @NotBlank
+        private String mediaRole;   // MAIN | DETAIL | GALLERY
+
+        private String altText;
+        private Integer sortOrder;
+        private Boolean isPrimary;
+    }
+
     /** 360도 프레임 업로드 아이템 — S3 업로드 후 URL과 각도를 함께 전달 */
     @Getter
     public static class FrameUploadItem {

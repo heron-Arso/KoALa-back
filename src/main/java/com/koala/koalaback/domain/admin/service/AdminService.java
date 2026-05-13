@@ -53,13 +53,14 @@ public class AdminService {
             throw new BusinessException(ErrorCode.ADMIN_NOT_FOUND);
         }
 
-        admin.updateLastLogin(httpReq.getRemoteAddr());
+        String clientIp = resolveClientIp(httpReq);
+        admin.updateLastLogin(clientIp);
         String token = jwtProvider.createAccessToken(admin.getId(), "ADMIN");
 
         // 감사 로그
         saveAuditLog(admin, "LOGIN", "admins", admin.getId(),
                 httpReq.getRequestURI(), httpReq.getMethod(),
-                httpReq.getRemoteAddr(), null, null, null);
+                clientIp, null, null, null);
 
         log.info("Admin login: adminId={}", admin.getId());
         return new AdminDto.TokenResponse(token);
@@ -107,6 +108,19 @@ public class AdminService {
     }
 
     // ── Private helpers ───────────────────────────────────
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            int comma = xff.indexOf(',');
+            return (comma > 0 ? xff.substring(0, comma) : xff).trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
+    }
 
     private void saveAuditLog(Admin admin, String actionType, String targetType,
                               Long targetId, String requestPath, String httpMethod,

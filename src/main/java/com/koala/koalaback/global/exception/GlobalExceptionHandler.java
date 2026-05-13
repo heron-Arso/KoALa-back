@@ -2,6 +2,7 @@ package com.koala.koalaback.global.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -47,6 +49,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnknown(Exception e, HttpServletRequest req) {
+        log.error("[500] {} {} — {}: {}", req.getMethod(), req.getRequestURI(),
+                e.getClass().getSimpleName(), e.getMessage(), e);
         ErrorCode ec = ErrorCode.INTERNAL_ERROR;
         return ResponseEntity
                 .status(ec.getStatus())

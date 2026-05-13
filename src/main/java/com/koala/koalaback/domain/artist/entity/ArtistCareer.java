@@ -41,4 +41,11 @@ public class ArtistCareer {
         this.sortOrder = sortOrder;
         this.createdAt = LocalDateTime.now();
     }
+
+    public void update(String category, Integer year, String content, Integer sortOrder) {
+        this.category  = category;
+        this.year      = year;
+        this.content   = content;
+        this.sortOrder = sortOrder;
+    }
 }

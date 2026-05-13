@@ -3,7 +3,10 @@ package com.koala.koalaback.domain.artist.dto;
 import com.koala.koalaback.domain.artist.entity.Artist;
 import com.koala.koalaback.domain.artist.entity.ArtistCareer;
 import com.koala.koalaback.domain.artist.entity.ArtistMedia;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,6 +41,46 @@ public class ArtistDto {
         private String description;
         private String artistNote;
         private String profileImageUrl;
+    }
+
+    @Getter
+    public static class MediaAddRequest {
+        @NotBlank
+        private String mediaType;   // IMAGE | VIDEO
+
+        @NotBlank
+        private String mediaRole;   // PROFILE | GALLERY | INTERVIEW_VIDEO | INTERVIEW_IMAGE
+
+        private String title;
+        private Integer sortOrder;
+    }
+
+    @Getter
+    public static class CareerAddRequest {
+        @NotBlank
+        private String category;   // 학력 | 개인전 | 그룹전
+
+        @NotNull @Min(1900) @Max(2100)
+        private Integer year;
+
+        @NotBlank @Size(max = 500)
+        private String content;
+
+        private Integer sortOrder;
+    }
+
+    @Getter
+    public static class CareerUpdateRequest {
+        @NotBlank
+        private String category;
+
+        @NotNull @Min(1900) @Max(2100)
+        private Integer year;
+
+        @NotBlank @Size(max = 500)
+        private String content;
+
+        private Integer sortOrder;
     }
 
     // ── Responses ─────────────────────────────────────────

@@ -13,6 +13,7 @@ import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.response.PageResponse;
 import com.koala.koalaback.global.util.CodeGenerator;
+import com.koala.koalaback.infra.storage.StorageUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,6 +40,7 @@ public class SkuService {
     private final ArtistService artistService;
     private final StockService stockService;
     private final CodeGenerator codeGenerator;
+    private final StorageUploader s3Uploader;
 
     // ── 공개 조회 ─────────────────────────────────────────
 
@@ -202,6 +205,58 @@ public class SkuService {
                 .frameCount(mediaList.size())
                 .frames(mediaList.stream().map(SkuDto.MediaResponse::from).toList())
                 .build();
+    }
+
+    // ── 미디어 관리 (어드민) ──────────────────────────────
+
+    @Transactional
+    public SkuDto.MediaResponse addMedia(String skuCode, MultipartFile file,
+                                         SkuDto.MediaAddRequest req) {
+        Sku sku = getSkuEntityByCode(skuCode);
+        String dir = "skus/" + sku.getSkuCode() + "/" + req.getMediaRole().toLowerCase();
+        String fileUrl = s3Uploader.upload(file, dir);
+
+        List<SkuMedia> existing = skuMediaRepository
+                .findBySkuIdAndMediaRoleOrderBySortOrderAsc(sku.getId(), req.getMediaRole());
+        int nextOrder = req.getSortOrder() != null ? req.getSortOrder() : existing.size();
+
+        boolean makePrimary = Boolean.TRUE.equals(req.getIsPrimary());
+
+        SkuMedia media = SkuMedia.builder()
+                .sku(sku)
+                .mediaType(req.getMediaType())
+                .mediaRole(req.getMediaRole())
+                .fileUrl(fileUrl)
+                .altText(req.getAltText())
+                .sortOrder(nextOrder)
+                .isPrimary(makePrimary)
+                .build();
+        skuMediaRepository.save(media);
+
+        // 대표 이미지로 지정된 경우 SKU.primaryImageUrl 동기화
+        if (makePrimary) {
+            sku.update(sku.getName(), sku.getSlug(), sku.getDescription(),
+                    sku.getListPrice(), sku.getSalePrice(), fileUrl);
+        }
+
+        return SkuDto.MediaResponse.from(media);
+    }
+
+    @Transactional
+    public void deleteMedia(String skuCode, Long mediaId) {
+        Sku sku = getSkuEntityByCode(skuCode);
+        SkuMedia media = skuMediaRepository.findById(mediaId)
+                .filter(m -> m.getSku().getId().equals(sku.getId()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        s3Uploader.delete(media.getFileUrl());
+        skuMediaRepository.delete(media);
+    }
+
+    public List<SkuDto.MediaResponse> getMediaList(String skuCode) {
+        Sku sku = getSkuEntityByCode(skuCode);
+        return skuMediaRepository
+                .findBySkuIdOrderByMediaRoleAscSortOrderAsc(sku.getId())
+                .stream().map(SkuDto.MediaResponse::from).toList();
     }
 
     // ── 재고 조회 ─────────────────────────────────────────
