@@ -15,12 +15,15 @@ import com.koala.koalaback.global.response.PageResponse;
 import com.koala.koalaback.global.util.CodeGenerator;
 import com.koala.koalaback.infra.storage.StorageUploader;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,10 +40,33 @@ public class ArtistService {
     // ── 유저용 ────────────────────────────────────────────
 
     public PageResponse<ArtistDto.SummaryResponse> getArtists(Pageable pageable) {
-        return PageResponse.of(
-                artistRepository.findByDeletedAtIsNullAndIsActiveTrue(pageable)
-                        .map(ArtistDto.SummaryResponse::from)
-        );
+        Page<Artist> page = artistRepository.findByDeletedAtIsNullAndIsActiveTrue(pageable);
+        List<Long> ids = page.getContent().stream().map(Artist::getId).toList();
+
+        if (ids.isEmpty()) {
+            return PageResponse.of(page.map(ArtistDto.SummaryResponse::from));
+        }
+
+        // 미디어 배치 로드 (N+1 방지)
+        Map<Long, List<ArtistMedia>> mediaByArtist = artistMediaRepository
+                .findByArtistIdIn(ids)
+                .stream()
+                .collect(Collectors.groupingBy(m -> m.getArtist().getId()));
+
+        // 팔로워 수 배치 로드 (N+1 방지)
+        Map<Long, Long> followByArtist = artistFollowRepository
+                .countsByArtistIds(ids)
+                .stream()
+                .collect(Collectors.toMap(
+                        ArtistFollowRepository.FollowCountProjection::getArtistId,
+                        ArtistFollowRepository.FollowCountProjection::getCnt
+                ));
+
+        return PageResponse.of(page.map(a -> ArtistDto.SummaryResponse.fromWithMedia(
+                a,
+                mediaByArtist.getOrDefault(a.getId(), List.of()),
+                followByArtist.getOrDefault(a.getId(), 0L)
+        )));
     }
 
     public ArtistDto.DetailResponse getArtist(String artistCode, Long userId) {
@@ -127,6 +153,27 @@ public class ArtistService {
             artist.updateProfileImage(fileUrl);
         }
 
+        return ArtistDto.MediaResponse.from(media);
+    }
+
+    /** YouTube 등 외부 URL을 파일 업로드 없이 미디어로 등록 */
+    @Transactional
+    public ArtistDto.MediaResponse addMediaUrl(String artistCode, ArtistDto.MediaUrlRequest req) {
+        Artist artist = getArtistEntityByCode(artistCode);
+
+        // 같은 role의 기존 미디어를 한 번에 삭제 (인터뷰 영상은 1개만 유지)
+        artistMediaRepository.deleteByArtistIdAndMediaRole(artist.getId(), req.getMediaRole());
+
+        int order = req.getSortOrder() != null ? req.getSortOrder() : 0;
+        ArtistMedia media = ArtistMedia.builder()
+                .artist(artist)
+                .mediaType(req.getMediaType())
+                .mediaRole(req.getMediaRole())
+                .fileUrl(req.getFileUrl())
+                .title(req.getTitle())
+                .sortOrder(order)
+                .build();
+        artistMediaRepository.save(media);
         return ArtistDto.MediaResponse.from(media);
     }
 

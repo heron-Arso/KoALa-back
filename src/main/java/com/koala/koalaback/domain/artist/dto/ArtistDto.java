@@ -55,6 +55,22 @@ public class ArtistDto {
         private Integer sortOrder;
     }
 
+    /** 외부 URL(YouTube 등) 등록 요청 — 파일 업로드 없이 URL만 저장 */
+    @Getter
+    public static class MediaUrlRequest {
+        @NotBlank
+        private String fileUrl;     // YouTube embed URL 등 외부 URL
+
+        @NotBlank
+        private String mediaType;   // VIDEO
+
+        @NotBlank
+        private String mediaRole;   // INTERVIEW_VIDEO
+
+        private String title;
+        private Integer sortOrder;
+    }
+
     @Getter
     public static class CareerAddRequest {
         @NotBlank
@@ -94,7 +110,10 @@ public class ArtistDto {
         private String slug;
         private String profileImageUrl;
         private Boolean isActive;
+        private List<MediaResponse> mediaList;
+        private Long followCount;
 
+        /** 단순 조회 (미디어/팔로워 수 불필요한 경우) */
         public static SummaryResponse from(Artist a) {
             return SummaryResponse.builder()
                     .id(a.getId())
@@ -103,6 +122,24 @@ public class ArtistDto {
                     .slug(a.getSlug())
                     .profileImageUrl(a.getProfileImageUrl())
                     .isActive(a.getIsActive())
+                    .mediaList(List.of())
+                    .followCount(0L)
+                    .build();
+        }
+
+        /** 목록 조회 — 미디어·팔로워 수 배치 로드 */
+        public static SummaryResponse fromWithMedia(Artist a,
+                                                    List<ArtistMedia> media,
+                                                    long followCount) {
+            return SummaryResponse.builder()
+                    .id(a.getId())
+                    .artistCode(a.getArtistCode())
+                    .name(a.getName())
+                    .slug(a.getSlug())
+                    .profileImageUrl(a.getProfileImageUrl())
+                    .isActive(a.getIsActive())
+                    .mediaList(media.stream().map(MediaResponse::from).toList())
+                    .followCount(followCount)
                     .build();
         }
     }

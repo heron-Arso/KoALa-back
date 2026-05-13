@@ -60,6 +60,14 @@ public class AdminArtistController {
         return ApiResponse.ok(artistService.addMedia(artistCode, file, req));
     }
 
+    @PostMapping("/{artistCode}/media-url")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<ArtistDto.MediaResponse> addMediaUrl(
+            @PathVariable String artistCode,
+            @Valid @RequestBody ArtistDto.MediaUrlRequest req) {
+        return ApiResponse.ok(artistService.addMediaUrl(artistCode, req));
+    }
+
     @DeleteMapping("/{artistCode}/media/{mediaId}")
     public ApiResponse<Void> deleteMedia(
             @PathVariable String artistCode,
