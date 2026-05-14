@@ -55,6 +55,8 @@ public class SkuDto {
         private String slug;
 
         private String description;
+        private String skuType;   // ARTWORK | GOODS
+        private String genre;     // ART_TOY | SCULPTURE | PAINTING | PRINT | PHOTOGRAPH | INSTALLATION | TEXTILE | OTHER
 
         @NotNull @PositiveOrZero
         private BigDecimal listPrice;

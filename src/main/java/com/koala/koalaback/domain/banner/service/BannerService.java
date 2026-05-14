@@ -8,9 +8,11 @@ import com.koala.koalaback.domain.banner.repository.BannerRepository;
 import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.util.CodeGenerator;
+import com.koala.koalaback.infra.storage.StorageUploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +25,7 @@ public class BannerService {
     private final BannerRepository bannerRepository;
     private final AdminService adminService;
     private final CodeGenerator codeGenerator;
+    private final StorageUploader storageUploader;
 
     // ── 유저 공개 조회 ────────────────────────────────────
 
@@ -103,6 +106,24 @@ public class BannerService {
     @Transactional
     public void deleteBanner(String bannerCode) {
         getBannerEntityByCode(bannerCode).softDelete();
+    }
+
+    /** 이미지 파일 업로드 → URL 반환 (배너 생성 전 미리 업로드용) */
+    public String uploadImage(MultipartFile file) {
+        return storageUploader.upload(file, "banners");
+    }
+
+    /** 기존 배너 이미지 교체 */
+    @Transactional
+    public BannerDto.BannerResponse updateImage(String bannerCode, MultipartFile file) {
+        Banner banner = getBannerEntityByCode(bannerCode);
+        // 기존 이미지 삭제 시도 (로컬 파일이면 삭제, S3/외부 URL이면 무시)
+        if (banner.getImageUrl() != null && !banner.getImageUrl().isBlank()) {
+            storageUploader.delete(banner.getImageUrl());
+        }
+        String newUrl = storageUploader.upload(file, "banners");
+        banner.updateImageUrl(newUrl);
+        return BannerDto.BannerResponse.from(banner);
     }
 
     // ── Private helpers ───────────────────────────────────

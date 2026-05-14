@@ -6,11 +6,14 @@ import com.koala.koalaback.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/api/v1/banners")
@@ -63,5 +66,22 @@ public class AdminBannerController {
     public ApiResponse<Void> deleteBanner(@PathVariable String bannerCode) {
         bannerService.deleteBanner(bannerCode);
         return ApiResponse.ok();
+    }
+
+    /** 배너 생성 전 이미지를 미리 업로드하고 URL만 반환 */
+    @PostMapping(value = "/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Map<String, String>> uploadBannerImage(
+            @RequestPart("file") MultipartFile file) {
+        String url = bannerService.uploadImage(file);
+        return ApiResponse.ok(Map.of("imageUrl", url));
+    }
+
+    /** 기존 배너 이미지 교체 업로드 */
+    @PatchMapping(value = "/{bannerCode}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<BannerDto.BannerResponse> updateBannerImage(
+            @PathVariable String bannerCode,
+            @RequestPart("file") MultipartFile file) {
+        return ApiResponse.ok(bannerService.updateImage(bannerCode, file));
     }
 }

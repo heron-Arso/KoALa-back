@@ -28,7 +28,7 @@ public class Banner extends BaseTimeEntity {
     @Column(length = 255)
     private String subtitle;
 
-    @Column(nullable = false, length = 700)
+    @Column(length = 700)
     private String imageUrl;
 
     @Column(length = 700)
@@ -105,6 +105,8 @@ public class Banner extends BaseTimeEntity {
         this.visibleTo = visibleTo;
         this.updatedByAdmin = updatedByAdmin;
     }
+
+    public void updateImageUrl(String url) { this.imageUrl = url; }
 
     public void activate()   { this.isActive = true; }
     public void deactivate() { this.isActive = false; }

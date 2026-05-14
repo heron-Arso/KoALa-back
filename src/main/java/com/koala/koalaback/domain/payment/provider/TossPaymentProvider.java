@@ -1,5 +1,7 @@
 package com.koala.koalaback.domain.payment.provider;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +28,7 @@ public class TossPaymentProvider implements PaymentProvider {
     private String secretKey;
 
     private final RestTemplate restTemplate;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
     public String getProviderCode() { return "TOSS"; }
@@ -47,12 +50,13 @@ public class TossPaymentProvider implements PaymentProvider {
                     Map.class
             );
             Map<String, Object> res = response.getBody();
+            String rawJson = toJson(res);
             return new PaymentConfirmResult(
                     true,
                     (String) res.get("paymentKey"),
                     (String) res.get("approvalNo"),
                     new BigDecimal(res.get("totalAmount").toString()),
-                    res.toString(),
+                    rawJson,
                     null, null
             );
         } catch (HttpClientErrorException e) {
@@ -84,7 +88,7 @@ public class TossPaymentProvider implements PaymentProvider {
                     Map.class
             );
             Map<String, Object> res = response.getBody();
-            return new PaymentCancelResult(true, cancelAmount, res.toString(), null, null);
+            return new PaymentCancelResult(true, cancelAmount, toJson(res), null, null);
         } catch (HttpClientErrorException e) {
             String body = e.getResponseBodyAsString();
             String code = extractJsonField(body, "code");
@@ -95,6 +99,16 @@ public class TossPaymentProvider implements PaymentProvider {
             log.error("Toss cancel error: pgTransactionId={}, error={}", pgTransactionId, e.getMessage());
             return new PaymentCancelResult(
                     false, null, null, "TOSS_CANCEL_ERROR", e.getMessage());
+        }
+    }
+
+    /** Map → 유효한 JSON 문자열 변환 */
+    private String toJson(Map<String, Object> map) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize response to JSON", e);
+            return "{}";
         }
     }
 

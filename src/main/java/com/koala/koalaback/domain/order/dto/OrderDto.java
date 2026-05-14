@@ -51,6 +51,13 @@ public class OrderDto {
     }
 
     @Getter
+    public static class AdminCancelRequest {
+        @NotBlank
+        private String reason;            // 취소 사유 (필수)
+        private BigDecimal cancelAmount;  // null 이면 전액 환불
+    }
+
+    @Getter
     public static class RegisterTrackingRequest {
         @NotBlank
         private String carrierCode;
@@ -63,6 +70,7 @@ public class OrderDto {
     @Builder
     public static class OrderSummaryResponse {
         private Long id;
+        private Long userId;
         private String orderNo;
         private String orderStatus;
         private String paymentStatus;
@@ -70,6 +78,8 @@ public class OrderDto {
         private int itemCount;
         private String firstSkuName;
         private String firstSkuImageUrl;
+        private String ordererName;
+        private String ordererPhone;
         private LocalDateTime createdAt;
 
         public static OrderSummaryResponse from(Order o) {
@@ -80,6 +90,7 @@ public class OrderDto {
                     ? items.get(0).getSku().getPrimaryImageUrl() : null);
             return OrderSummaryResponse.builder()
                     .id(o.getId())
+                    .userId(o.getUser() != null ? o.getUser().getId() : null)
                     .orderNo(o.getOrderNo())
                     .orderStatus(o.getOrderStatus())
                     .paymentStatus(o.getPaymentStatus())
@@ -87,6 +98,8 @@ public class OrderDto {
                     .itemCount(items.size())
                     .firstSkuName(firstName)
                     .firstSkuImageUrl(firstImage)
+                    .ordererName(o.getOrdererName())
+                    .ordererPhone(o.getOrdererPhone())
                     .createdAt(o.getCreatedAt())
                     .build();
         }

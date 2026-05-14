@@ -77,7 +77,12 @@ public enum ErrorCode {
     //패스워드 리셋
     PASSWORD_RESET_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "PR001", "인증코드를 찾을 수 없습니다."),
     PASSWORD_RESET_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "PR002", "인증 코드가 만료되었습니다."),
-    SOCIAL_LOGIN_USER(HttpStatus.BAD_REQUEST, "PR003", "소셜 로그인 사용자는 비밀번호 찾기를 사용할 수 없습니다.");
+    SOCIAL_LOGIN_USER(HttpStatus.BAD_REQUEST, "PR003", "소셜 로그인 사용자는 비밀번호 찾기를 사용할 수 없습니다."),
+
+    // Return Request
+    RETURN_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "RR001", "반품/교환 요청을 찾을 수 없습니다."),
+    RETURN_REQUEST_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "RR002", "반품/교환 신청이 불가능한 상태입니다."),
+    RETURN_REQUEST_ALREADY_EXISTS(HttpStatus.CONFLICT, "RR003", "이미 반품/교환 요청이 접수된 주문입니다.");
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

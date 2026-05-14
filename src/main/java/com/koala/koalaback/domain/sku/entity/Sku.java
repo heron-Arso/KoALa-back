@@ -106,10 +106,13 @@ public class Sku extends BaseTimeEntity {
     }
 
     public void update(String name, String slug, String description,
+                       String skuType, String genre,
                        BigDecimal listPrice, BigDecimal salePrice, String primaryImageUrl) {
         this.name = name;
         this.slug = slug;
         this.description = description;
+        if (skuType != null && !skuType.isBlank()) this.skuType = skuType;
+        if (genre    != null && !genre.isBlank())    this.genre = genre;
         this.listPrice = listPrice;
         this.salePrice = salePrice;
         this.primaryImageUrl = primaryImageUrl;

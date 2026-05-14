@@ -23,8 +23,8 @@ public class BannerDto {
         @Size(max = 255)
         private String subtitle;
 
-        @NotBlank @Size(max = 700)
-        private String imageUrl;
+        @Size(max = 700)
+        private String imageUrl;   // URL 직접 입력 또는 업로드 후 채워짐
 
         @Size(max = 700)
         private String mobileImageUrl;

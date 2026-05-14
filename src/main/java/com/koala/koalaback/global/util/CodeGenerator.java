@@ -42,4 +42,12 @@ public class CodeGenerator {
                 .substring(0, 12)
                 .toUpperCase();
     }
+
+    /** 반품번호: RET-{uuid 앞 12자리} */
+    public String generateReturnNo() {
+        return "RET-" + UUID.randomUUID().toString()
+                .replace("-", "")
+                .substring(0, 12)
+                .toUpperCase();
+    }
 }

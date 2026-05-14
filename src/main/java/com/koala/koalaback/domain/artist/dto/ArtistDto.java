@@ -3,6 +3,7 @@ package com.koala.koalaback.domain.artist.dto;
 import com.koala.koalaback.domain.artist.entity.Artist;
 import com.koala.koalaback.domain.artist.entity.ArtistCareer;
 import com.koala.koalaback.domain.artist.entity.ArtistMedia;
+import com.koala.koalaback.domain.sku.entity.Sku;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class ArtistDto {
@@ -108,10 +110,12 @@ public class ArtistDto {
         private String artistCode;
         private String name;
         private String slug;
+        private String description;
         private String profileImageUrl;
         private Boolean isActive;
         private List<MediaResponse> mediaList;
         private Long followCount;
+        private FeaturedSkuInfo featuredSku;
 
         /** 단순 조회 (미디어/팔로워 수 불필요한 경우) */
         public static SummaryResponse from(Artist a) {
@@ -120,6 +124,7 @@ public class ArtistDto {
                     .artistCode(a.getArtistCode())
                     .name(a.getName())
                     .slug(a.getSlug())
+                    .description(a.getDescription())
                     .profileImageUrl(a.getProfileImageUrl())
                     .isActive(a.getIsActive())
                     .mediaList(List.of())
@@ -127,19 +132,68 @@ public class ArtistDto {
                     .build();
         }
 
-        /** 목록 조회 — 미디어·팔로워 수 배치 로드 */
+        /** 목록 조회 — 미디어·팔로워 수·대표 작품 배치 로드 */
         public static SummaryResponse fromWithMedia(Artist a,
                                                     List<ArtistMedia> media,
-                                                    long followCount) {
+                                                    long followCount,
+                                                    Sku featuredSku) {
             return SummaryResponse.builder()
                     .id(a.getId())
                     .artistCode(a.getArtistCode())
                     .name(a.getName())
                     .slug(a.getSlug())
+                    .description(a.getDescription())
                     .profileImageUrl(a.getProfileImageUrl())
                     .isActive(a.getIsActive())
                     .mediaList(media.stream().map(MediaResponse::from).toList())
                     .followCount(followCount)
+                    .featuredSku(featuredSku != null ? FeaturedSkuInfo.from(featuredSku) : null)
+                    .build();
+        }
+    }
+
+    /** 대표 작품 정보 — artist lab 카드 표시용 */
+    @Getter
+    @Builder
+    public static class FeaturedSkuInfo {
+        private String skuCode;
+        private String name;
+        private BigDecimal listPrice;
+        private BigDecimal salePrice;
+        private String imageUrl;
+        private String description;
+
+        public static FeaturedSkuInfo from(Sku sku) {
+            return FeaturedSkuInfo.builder()
+                    .skuCode(sku.getSkuCode())
+                    .name(sku.getName())
+                    .listPrice(sku.getListPrice())
+                    .salePrice(sku.getSalePrice())
+                    .imageUrl(sku.getPrimaryImageUrl())
+                    .description(sku.getDescription())
+                    .build();
+        }
+    }
+
+    /** 어드민 대표 작품 선택 목록용 */
+    @Getter
+    @Builder
+    public static class ArtistSkuItem {
+        private String skuCode;
+        private String name;
+        private BigDecimal listPrice;
+        private BigDecimal salePrice;
+        private String imageUrl;
+        private String status;
+
+        public static ArtistSkuItem from(Sku sku) {
+            return ArtistSkuItem.builder()
+                    .skuCode(sku.getSkuCode())
+                    .name(sku.getName())
+                    .listPrice(sku.getListPrice())
+                    .salePrice(sku.getSalePrice())
+                    .imageUrl(sku.getPrimaryImageUrl())
+                    .status(sku.getStatus())
                     .build();
         }
     }

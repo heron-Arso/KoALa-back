@@ -106,6 +106,13 @@ public class Order extends BaseTimeEntity {
         this.cancelledAt = LocalDateTime.now();
     }
 
+    /** 관리자 강제 취소 — 배송중/완료 포함 모든 상태에서 취소 가능 */
+    public void forceCancel() {
+        this.orderStatus  = "CANCELLED";
+        this.paymentStatus = "CANCELLED";
+        this.cancelledAt  = LocalDateTime.now();
+    }
+
     public void markPaymentFailed() { this.paymentStatus = "FAILED"; }
 
     public boolean isCancellable() {

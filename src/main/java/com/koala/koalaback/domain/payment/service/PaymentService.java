@@ -76,6 +76,11 @@ public class PaymentService {
                 .findTopByOrderIdOrderByCreatedAtDesc(order.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
+        // 이미 처리된 결제(paymentKey 재사용) 방지
+        if (!"READY".equals(payment.getStatus())) {
+            throw new BusinessException(ErrorCode.PAYMENT_ALREADY_PROCESSED);
+        }
+
         if (payment.getRequestedAmount().compareTo(req.getAmount()) != 0) {
             throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }

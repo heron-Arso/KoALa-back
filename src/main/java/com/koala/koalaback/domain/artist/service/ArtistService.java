@@ -9,6 +9,8 @@ import com.koala.koalaback.domain.artist.repository.ArtistCareerRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistFollowRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistMediaRepository;
 import com.koala.koalaback.domain.artist.repository.ArtistRepository;
+import com.koala.koalaback.domain.sku.entity.Sku;
+import com.koala.koalaback.domain.sku.repository.SkuRepository;
 import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.response.PageResponse;
@@ -23,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +37,7 @@ public class ArtistService {
     private final ArtistMediaRepository artistMediaRepository;
     private final ArtistFollowRepository artistFollowRepository;
     private final ArtistCareerRepository artistCareerRepository;
+    private final SkuRepository skuRepository;   // 작가 삭제 시 연관 상품 cascade용 (SkuService 순환 참조 방지)
     private final StorageUploader s3Uploader;
     private final CodeGenerator codeGenerator;
 
@@ -62,10 +66,22 @@ public class ArtistService {
                         ArtistFollowRepository.FollowCountProjection::getCnt
                 ));
 
+        // 대표 작품 배치 로드 (N+1 방지)
+        List<Long> featuredSkuIds = page.getContent().stream()
+                .map(Artist::getFeaturedSkuId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, Sku> featuredSkuMap = featuredSkuIds.isEmpty() ? Map.of() :
+                skuRepository.findAllById(featuredSkuIds).stream()
+                        .filter(s -> s.getDeletedAt() == null)
+                        .collect(Collectors.toMap(Sku::getId, s -> s));
+
         return PageResponse.of(page.map(a -> ArtistDto.SummaryResponse.fromWithMedia(
                 a,
                 mediaByArtist.getOrDefault(a.getId(), List.of()),
-                followByArtist.getOrDefault(a.getId(), 0L)
+                followByArtist.getOrDefault(a.getId(), 0L),
+                a.getFeaturedSkuId() != null ? featuredSkuMap.get(a.getFeaturedSkuId()) : null
         )));
     }
 
@@ -99,6 +115,12 @@ public class ArtistService {
 
     // ── 어드민용 ──────────────────────────────────────────
 
+    /** 삭제되지 않은 작가 전체 (공개/비공개 무관) */
+    public PageResponse<ArtistDto.SummaryResponse> getAdminArtists(Pageable pageable) {
+        Page<Artist> page = artistRepository.findByDeletedAtIsNull(pageable);
+        return PageResponse.of(page.map(ArtistDto.SummaryResponse::from));
+    }
+
     @Transactional
     public ArtistDto.SummaryResponse createArtist(ArtistDto.CreateRequest req) {
         Artist artist = Artist.builder()
@@ -121,8 +143,48 @@ public class ArtistService {
     }
 
     @Transactional
+    public void activateArtist(String artistCode) {
+        getArtistEntityByCode(artistCode).activate();
+    }
+
+    @Transactional
+    public void deactivateArtist(String artistCode) {
+        getArtistEntityByCode(artistCode).deactivate();
+    }
+
+    /** 어드민: 작가의 작품 목록 조회 (대표 작품 선택용) */
+    public List<ArtistDto.ArtistSkuItem> getArtistSkus(String artistCode) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        return skuRepository.findByArtistIdAndDeletedAtIsNull(artist.getId())
+                .stream()
+                .map(ArtistDto.ArtistSkuItem::from)
+                .toList();
+    }
+
+    @Transactional
+    public ArtistDto.FeaturedSkuInfo setFeaturedSku(String artistCode, String skuCode) {
+        Artist artist = getArtistEntityByCode(artistCode);
+        Sku sku = skuRepository.findBySkuCode(skuCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        artist.setFeaturedSku(sku.getId());
+        return ArtistDto.FeaturedSkuInfo.from(sku);
+    }
+
+    @Transactional
+    public void clearFeaturedSku(String artistCode) {
+        getArtistEntityByCode(artistCode).clearFeaturedSku();
+    }
+
+    @Transactional
     public void deleteArtist(String artistCode) {
-        getArtistEntityByCode(artistCode).softDelete();
+        Artist artist = getArtistEntityByCode(artistCode);
+
+        // 연관된 상품(SKU) 모두 soft-delete
+        skuRepository.findByArtistIdAndDeletedAtIsNull(artist.getId())
+                .forEach(sku -> sku.softDelete());
+
+        // 작가 soft-delete
+        artist.softDelete();
     }
 
     // ── 미디어 관리 (어드민) ──────────────────────────────

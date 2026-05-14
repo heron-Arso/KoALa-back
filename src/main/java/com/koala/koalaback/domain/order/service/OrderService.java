@@ -178,6 +178,72 @@ public class OrderService {
         return OrderDto.OrderDetailResponse.from(order);
     }
 
+    /** 관리자 강제 취소 — 모든 상태 취소 가능, 이유 필수, 부분환불 지원 */
+    @Transactional
+    public OrderDto.OrderDetailResponse adminCancelOrder(String orderNo, OrderDto.AdminCancelRequest req) {
+        Order order = orderRepository.findByOrderNo(orderNo)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 이미 취소된 주문이면 예외
+        if ("CANCELLED".equals(order.getOrderStatus())) {
+            throw new BusinessException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+        }
+
+        // 재고 복구 (배송완료 상태라도 재고를 돌려줌)
+        order.getOrderItems().forEach(item -> {
+            if (item.getSku() != null) {
+                stockService.restore(item.getSku().getId(), item.getQuantity(),
+                        "admin_cancel", item.getId());
+            }
+        });
+
+        order.forceCancel();
+        log.info("Admin force cancel: orderNo={}, reason={}", orderNo, req.getReason());
+
+        // CAPTURED 결제 자동 환불
+        paymentRepository.findTopByOrderIdOrderByCreatedAtDesc(order.getId())
+                .filter(p -> "CAPTURED".equals(p.getStatus()))
+                .ifPresent(p -> {
+                    try {
+                        paymentService.cancel(p.getPaymentNo(),
+                                new PaymentDto.CancelRequest(req.getReason(), req.getCancelAmount()));
+                        log.info("Admin refund success: paymentNo={}, amount={}",
+                                p.getPaymentNo(), req.getCancelAmount());
+                    } catch (Exception e) {
+                        log.warn("Admin refund failed (manual required): paymentNo={}, error={}",
+                                p.getPaymentNo(), e.getMessage());
+                    }
+                });
+
+        return OrderDto.OrderDetailResponse.from(order);
+    }
+
+    /** 관리자 주문 상세 (트랜잭션 안에서 lazy 컬렉션 접근) */
+    public OrderDto.OrderDetailResponse getAdminOrderDetail(String orderNo) {
+        return OrderDto.OrderDetailResponse.from(getOrderEntityByNo(orderNo));
+    }
+
+    /** 관리자 전체 주문 목록 (트랜잭션 안에서 lazy 컬렉션 접근) */
+    public PageResponse<OrderDto.OrderSummaryResponse> getAdminOrders(Pageable pageable) {
+        return PageResponse.of(
+                orderRepository.findAllByOrderByCreatedAtDesc(pageable)
+                        .map(OrderDto.OrderSummaryResponse::from)
+        );
+    }
+
+    /** 관리자 주문 검색 — 회원ID / 주문자명 / 전화번호 */
+    public PageResponse<OrderDto.OrderSummaryResponse> adminSearchOrders(
+            Long userId, String name, String phone, Pageable pageable) {
+        return PageResponse.of(
+                orderRepository.searchOrders(
+                        userId,
+                        (name  != null && !name.isBlank())  ? name  : null,
+                        (phone != null && !phone.isBlank()) ? phone : null,
+                        pageable
+                ).map(OrderDto.OrderSummaryResponse::from)
+        );
+    }
+
     @Transactional
     public void registerTracking(String orderNo, OrderDto.RegisterTrackingRequest req) {
         Order order = getOrderEntityByNo(orderNo);

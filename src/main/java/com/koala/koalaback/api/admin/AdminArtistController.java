@@ -3,8 +3,11 @@ package com.koala.koalaback.api.admin;
 import com.koala.koalaback.domain.artist.dto.ArtistDto;
 import com.koala.koalaback.domain.artist.service.ArtistService;
 import com.koala.koalaback.global.response.ApiResponse;
+import com.koala.koalaback.global.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +26,14 @@ public class AdminArtistController {
 
     // ── 기본 CRUD ─────────────────────────────────────────
 
+    @GetMapping
+    public ApiResponse<PageResponse<ArtistDto.SummaryResponse>> getArtists(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ApiResponse.ok(artistService.getAdminArtists(
+                PageRequest.of(page, size, Sort.by("id").descending())));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ArtistDto.SummaryResponse> createArtist(
@@ -37,9 +48,42 @@ public class AdminArtistController {
         return ApiResponse.ok(artistService.updateArtist(artistCode, req));
     }
 
+    @PatchMapping("/{artistCode}/activate")
+    public ApiResponse<Void> activateArtist(@PathVariable String artistCode) {
+        artistService.activateArtist(artistCode);
+        return ApiResponse.ok();
+    }
+
+    @PatchMapping("/{artistCode}/deactivate")
+    public ApiResponse<Void> deactivateArtist(@PathVariable String artistCode) {
+        artistService.deactivateArtist(artistCode);
+        return ApiResponse.ok();
+    }
+
     @DeleteMapping("/{artistCode}")
     public ApiResponse<Void> deleteArtist(@PathVariable String artistCode) {
         artistService.deleteArtist(artistCode);
+        return ApiResponse.ok();
+    }
+
+    // ── 대표 작품 관리 ────────────────────────────────────
+
+    @GetMapping("/{artistCode}/skus")
+    public ApiResponse<List<ArtistDto.ArtistSkuItem>> getArtistSkus(
+            @PathVariable String artistCode) {
+        return ApiResponse.ok(artistService.getArtistSkus(artistCode));
+    }
+
+    @PutMapping("/{artistCode}/featured-sku")
+    public ApiResponse<ArtistDto.FeaturedSkuInfo> setFeaturedSku(
+            @PathVariable String artistCode,
+            @RequestBody java.util.Map<String, String> body) {
+        return ApiResponse.ok(artistService.setFeaturedSku(artistCode, body.get("skuCode")));
+    }
+
+    @DeleteMapping("/{artistCode}/featured-sku")
+    public ApiResponse<Void> clearFeaturedSku(@PathVariable String artistCode) {
+        artistService.clearFeaturedSku(artistCode);
         return ApiResponse.ok();
     }
 

@@ -40,6 +40,10 @@ public class Artist extends BaseTimeEntity {
     @Column(nullable = false)
     private Boolean isActive;
 
+    /** 대표 작품 SKU ID (nullable) — ON DELETE SET NULL */
+    @Column(name = "featured_sku_id", columnDefinition = "BIGINT UNSIGNED")
+    private Long featuredSkuId;
+
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -74,6 +78,12 @@ public class Artist extends BaseTimeEntity {
     public void updateProfileImage(String url) {
         this.profileImageUrl = url;
     }
+
+    public void activate()   { this.isActive = true; }
+    public void deactivate() { this.isActive = false; }
+
+    public void setFeaturedSku(Long skuId)  { this.featuredSkuId = skuId; }
+    public void clearFeaturedSku()           { this.featuredSkuId = null; }
 
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
