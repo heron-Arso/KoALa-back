@@ -38,7 +38,7 @@ public interface SkuRepository extends JpaRepository<Sku, Long> {
 
     /**
      * 키워드 검색 (name, description).
-     * ESCAPE '\\' 를 사용해 LIKE 와일드카드(%, _)를 안전하게 처리합니다.
+     * ESCAPE '\' 를 사용해 LIKE 와일드카드(%, _)를 안전하게 처리합니다.
      * 호출부에서 반드시 {@link com.koala.koalaback.global.util.LikeEscapeUtil#escape(String)} 로
      * 파라미터를 이스케이프한 뒤 %keyword% 형태로 전달하세요.
      */
@@ -46,7 +46,7 @@ public interface SkuRepository extends JpaRepository<Sku, Long> {
         SELECT s FROM Sku s
         WHERE s.status = 'ACTIVE'
           AND s.deletedAt IS NULL
-          AND (s.name LIKE :keyword ESCAPE '\\\\' OR s.description LIKE :keyword ESCAPE '\\\\')
+          AND (s.name LIKE :keyword ESCAPE '\\' OR s.description LIKE :keyword ESCAPE '\\')
         """)
     Page<Sku> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 

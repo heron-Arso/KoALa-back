@@ -13,6 +13,7 @@ import com.koala.koalaback.domain.payment.repository.PaymentRepository;
 import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.util.CodeGenerator;
+import com.koala.koalaback.infra.mail.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class PaymentService {
     private final CodeGenerator codeGenerator;
     private final List<PaymentProvider> providers;
     private final ObjectMapper objectMapper;
+    private final EmailService emailService;
 
     @Transactional
     public PaymentDto.PrepareResponse prepare(Long userId, PaymentDto.PrepareRequest req) {
@@ -98,6 +100,9 @@ public class PaymentService {
             order.markPaid();
             recordEvent(payment, "CAPTURED", "SUCCESS",
                     result.approvedAmount(), result.pgTransactionId(), result.rawResponse());
+
+            // 주문 완료 이메일 — @Async 비동기 발송 (결제 응답 속도에 영향 없음)
+            sendOrderConfirmEmailAsync(order);
         } else {
             payment.markFailed(result.failureCode(), result.failureMessage());
             order.markPaymentFailed();
@@ -167,6 +172,31 @@ public class PaymentService {
         paymentRepository.findByPaymentNo(paymentNo).ifPresent(payment ->
                 recordEvent(payment, "REFUND_FAILED", "FAILED", BigDecimal.ZERO, null, reason)
         );
+    }
+
+    private void sendOrderConfirmEmailAsync(Order order) {
+        try {
+            List<EmailService.OrderConfirmData.ItemData> items = order.getOrderItems().stream()
+                    .map(i -> new EmailService.OrderConfirmData.ItemData(
+                            i.getSkuNameSnapshot(),
+                            i.getQuantity(),
+                            i.getLineTotalAmount()))
+                    .toList();
+
+            emailService.sendOrderConfirmEmail(new EmailService.OrderConfirmData(
+                    order.getOrdererEmail(),
+                    order.getOrdererName(),
+                    order.getOrderNo(),
+                    items,
+                    order.getProductAmount(),
+                    order.getShippingAmount(),
+                    order.getTotalAmount()
+            ));
+        } catch (Exception e) {
+            // 이메일 실패가 결제 트랜잭션에 영향을 주어서는 안 됨 — 로그만 남기고 계속
+            log.warn("주문 완료 이메일 발송 준비 실패 (결제는 정상): orderNo={}, error={}",
+                    order.getOrderNo(), e.getMessage());
+        }
     }
 
     private PaymentProvider getProvider(String providerCode) {
