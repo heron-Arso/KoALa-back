@@ -6,35 +6,79 @@ import com.koala.koalaback.domain.admin.service.AdminService;
 import com.koala.koalaback.global.response.ApiResponse;
 import com.koala.koalaback.global.response.PageResponse;
 import com.koala.koalaback.global.security.TokenBlacklistService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.WebUtils;
 
 @RestController
 @RequestMapping("/admin/api/v1")
 @RequiredArgsConstructor
 public class AdminController {
 
+    private static final String ADMIN_COOKIE = "admin_token";
+
     private final AdminService adminService;
     private final TokenBlacklistService tokenBlacklistService;
+
+    @Value("${app.secure-cookies:false}")
+    private boolean secureCookies;
 
     @PostMapping("/auth/login")
     public ApiResponse<AdminDto.TokenResponse> login(
             @Valid @RequestBody AdminDto.LoginRequest req,
-            HttpServletRequest httpReq) {
-        return ApiResponse.ok(adminService.login(req, httpReq));
+            HttpServletRequest httpReq,
+            HttpServletResponse httpResp) {
+        AdminDto.TokenResponse tokenRes = adminService.login(req, httpReq);
+
+        // ResponseCookie 사용 — HttpOnly + Secure + SameSite 모두 설정
+        // SameSite=Strict: 어드민 쿠키는 same-site 요청에서만 전송 (CSRF 방지)
+        httpResp.addHeader("Set-Cookie",
+                ResponseCookie.from(ADMIN_COOKIE, tokenRes.getAccessToken())
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/admin/api/")
+                        .maxAge(60 * 60 * 8) // 8시간
+                        .sameSite("Strict")   // 어드민은 Strict — cross-site 요청에서 절대 전송 안 함
+                        .build().toString());
+
+        return ApiResponse.ok(tokenRes);
     }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/auth/logout")
     public ApiResponse<Void> logout(
-            @RequestHeader("Authorization") String bearerToken) {
-        String token = bearerToken.replace("Bearer ", "").trim();
-        tokenBlacklistService.blacklist(token);
+            HttpServletRequest httpReq,
+            HttpServletResponse httpResp) {
+        // 쿠키에서 토큰 추출해 블랙리스트 등록
+        Cookie cookie = WebUtils.getCookie(httpReq, ADMIN_COOKIE);
+        if (cookie != null) {
+            tokenBlacklistService.blacklist(cookie.getValue());
+        }
+        // Authorization 헤더 토큰도 블랙리스트 (하위 호환)
+        String authHeader = httpReq.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            tokenBlacklistService.blacklist(authHeader.substring(7).trim());
+        }
+        // 쿠키 즉시 만료
+        httpResp.addHeader("Set-Cookie",
+                ResponseCookie.from(ADMIN_COOKIE, "")
+                        .httpOnly(true)
+                        .secure(secureCookies)
+                        .path("/admin/api/")
+                        .maxAge(0)
+                        .sameSite("Strict")
+                        .build().toString());
+
         return ApiResponse.ok(null);
     }
 

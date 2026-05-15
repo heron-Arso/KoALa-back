@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 결제 PG사 웹훅 수신 컨트롤러
  * <p>
- * - POST /webhook/payments/toss     : Toss Payments (Basic Auth 서명 검증)
- * - POST /webhook/payments/kakaopay : KakaoPay     (IP 화이트리스트 + TLS 신뢰)
+ * - POST /webhook/payments/toss : Toss Payments (Basic Auth 서명 검증)
  * - SecurityConfig 에서 /webhook/** permitAll 처리됨
+ *
+ * <p>KakaoPay 결제는 Toss easyPay를 통해 처리되므로 별도 KakaoPay 웹훅 엔드포인트가 없습니다.
+ * KakaoPay 직접 연동이 필요할 경우 IP 화이트리스트 + 시그니처 검증을 반드시 구현하세요.
  */
 @Slf4j
 @RestController
@@ -46,20 +48,6 @@ public class PaymentWebhookController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        return ResponseEntity.ok().build();
-    }
-
-    // ── KakaoPay 웹훅 ────────────────────────────────────────────────────────
-    // KakaoPay 는 IP 화이트리스트 + TLS 로 신뢰 (별도 서명 헤더 없음)
-    @PostMapping("/kakaopay")
-    public ResponseEntity<Void> kakaoPayWebhook(@RequestBody String payload) {
-        try {
-            paymentService.handleWebhook("KAKAOPAY", payload);
-            log.info("[Webhook/KakaoPay] 처리 완료");
-        } catch (Exception e) {
-            log.error("[Webhook/KakaoPay] 처리 오류", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
         return ResponseEntity.ok().build();
     }
 }

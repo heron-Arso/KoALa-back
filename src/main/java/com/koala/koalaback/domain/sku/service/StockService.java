@@ -42,12 +42,18 @@ public class StockService {
     }
 
     /**
-     * 주문 시 재고 차감 — 부족하면 예외
+     * 주문 시 재고 차감 — 부족하면 예외.
+     *
+     * <p>비관적 락(SELECT ... FOR UPDATE)으로 동시 주문 Race Condition을 방지합니다.
+     * 같은 SKU에 대한 동시 요청은 이 트랜잭션이 커밋/롤백될 때까지 대기합니다.
      */
     @Transactional
     public void deduct(Long skuId, int quantity, String refType, Long refId) {
-        Sku sku = getSkuOrThrow(skuId);
-        int current = getStock(skuId);
+        // 비관적 락으로 Sku row를 잠근 뒤 재고 집계
+        Sku sku = skuRepository.findByIdForUpdate(skuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SKU_NOT_FOUND));
+
+        int current = stockLedgerRepository.sumDeltaBySkuId(skuId);
         if (current < quantity) {
             throw new BusinessException(ErrorCode.SKU_OUT_OF_STOCK);
         }

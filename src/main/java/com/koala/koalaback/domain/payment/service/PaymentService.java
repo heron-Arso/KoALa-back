@@ -1,5 +1,7 @@
 package com.koala.koalaback.domain.payment.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.koala.koalaback.domain.order.entity.Order;
 import com.koala.koalaback.domain.order.repository.OrderRepository;
 import com.koala.koalaback.domain.payment.dto.PaymentDto;
@@ -30,6 +32,7 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final CodeGenerator codeGenerator;
     private final List<PaymentProvider> providers;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public PaymentDto.PrepareResponse prepare(Long userId, PaymentDto.PrepareRequest req) {
@@ -140,9 +143,30 @@ public class PaymentService {
     @Transactional
     public void handleWebhook(String providerCode, String payloadJson) {
         log.info("Webhook received: provider={}", providerCode);
-        paymentRepository.findByPgTransactionId(extractTransactionId(payloadJson))
-                .ifPresent(payment -> recordEvent(
-                        payment, "WEBHOOK", "SUCCESS", BigDecimal.ZERO, null, payloadJson));
+        String paymentKey = extractTransactionId(payloadJson);
+        if (paymentKey.isBlank()) {
+            log.warn("Webhook paymentKey 추출 실패 — payload: {}", payloadJson);
+            return;
+        }
+        paymentRepository.findByPgTransactionId(paymentKey)
+                .ifPresentOrElse(
+                        payment -> {
+                            String status = extractWebhookStatus(payloadJson);
+                            recordEvent(payment, "WEBHOOK", status, BigDecimal.ZERO, paymentKey, payloadJson);
+                            log.info("Webhook processed: paymentKey={}, status={}", paymentKey, status);
+                        },
+                        () -> log.warn("Webhook — 매핑된 결제 없음: paymentKey={}", paymentKey)
+                );
+    }
+
+    /**
+     * 환불 실패 이벤트 기록 — 주문 취소/반품 승인 후 환불이 실패했을 때 감사 추적용
+     */
+    @Transactional
+    public void recordRefundFailure(String paymentNo, String reason) {
+        paymentRepository.findByPaymentNo(paymentNo).ifPresent(payment ->
+                recordEvent(payment, "REFUND_FAILED", "FAILED", BigDecimal.ZERO, null, reason)
+        );
     }
 
     private PaymentProvider getProvider(String providerCode) {
@@ -165,8 +189,39 @@ public class PaymentService {
                 .build());
     }
 
+    /**
+     * Toss Payments 웹훅 payload에서 paymentKey 추출
+     * Toss 웹훅 형식: { "eventType": "...", "data": { "paymentKey": "...", ... } }
+     */
     private String extractTransactionId(String payloadJson) {
-        // 실제 구현 시 PG사별 JSON 파싱
-        return "";
+        if (payloadJson == null || payloadJson.isBlank()) return "";
+        try {
+            JsonNode root = objectMapper.readTree(payloadJson);
+            // Toss 표준 웹훅 형식: data.paymentKey
+            JsonNode dataNode = root.path("data");
+            if (!dataNode.isMissingNode()) {
+                String key = dataNode.path("paymentKey").asText("");
+                if (!key.isBlank()) return key;
+            }
+            // 최상위 paymentKey fallback (일부 이벤트 타입)
+            return root.path("paymentKey").asText("");
+        } catch (Exception e) {
+            log.warn("Webhook payload 파싱 실패: {}", e.getMessage());
+            return "";
+        }
+    }
+
+    /**
+     * 웹훅 이벤트 상태 추출
+     * Toss 웹훅: data.status (DONE, CANCELED, PARTIAL_CANCELED, etc.)
+     */
+    private String extractWebhookStatus(String payloadJson) {
+        try {
+            JsonNode root = objectMapper.readTree(payloadJson);
+            String status = root.path("data").path("status").asText("");
+            return status.isBlank() ? "UNKNOWN" : status;
+        } catch (Exception e) {
+            return "UNKNOWN";
+        }
     }
 }

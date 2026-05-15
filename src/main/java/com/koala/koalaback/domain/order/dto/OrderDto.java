@@ -160,6 +160,7 @@ public class OrderDto {
         private String skuCode;
         private String skuName;
         private String artistName;
+        private String primaryImageUrl;
         private Integer quantity;
         private BigDecimal unitPrice;
         private BigDecimal lineTotalAmount;
@@ -171,6 +172,7 @@ public class OrderDto {
                     .skuCode(i.getSkuCodeSnapshot())
                     .skuName(i.getSkuNameSnapshot())
                     .artistName(i.getArtistNameSnapshot())
+                    .primaryImageUrl(i.getSku() != null ? i.getSku().getPrimaryImageUrl() : null)
                     .quantity(i.getQuantity())
                     .unitPrice(i.getUnitPrice())
                     .lineTotalAmount(i.getLineTotalAmount())

@@ -2,9 +2,11 @@ package com.koala.koalaback.domain.payment.provider;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -12,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -24,11 +27,34 @@ public class TossPaymentProvider implements PaymentProvider {
 
     private static final String TOSS_API_BASE = "https://api.tosspayments.com/v1/payments";
 
-    @Value("${toss.secret-key:test_sk_placeholder}")
+    /** 기본값 없음 — 미설정 시 애플리케이션 기동 실패 (운영 환경 미설정 방지) */
+    @Value("${toss.secret-key}")
     private String secretKey;
 
     private final RestTemplate restTemplate;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final ObjectMapper objectMapper;  // Spring 관리 빈 주입 (JacksonConfig)
+    private final Environment environment;
+
+    /**
+     * 기동 시 시크릿 키 유효성 검증.
+     * 운영(prod) 프로필에서 테스트 키 사용 시 즉시 기동 실패.
+     */
+    @PostConstruct
+    void validateSecretKey() {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException(
+                    "[Toss] toss.secret-key 가 설정되지 않았습니다. 환경변수 TOSS_SECRET_KEY 를 확인하세요.");
+        }
+        boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        if (isProd && secretKey.startsWith("test_sk_")) {
+            throw new IllegalStateException(
+                    "[Toss] 운영 환경에 테스트 시크릿 키(test_sk_*)를 사용할 수 없습니다. " +
+                    "TOSS_SECRET_KEY 환경변수에 실제 운영 키를 설정하세요.");
+        }
+        if (secretKey.startsWith("test_sk_")) {
+            log.warn("[Toss] 테스트 시크릿 키 사용 중 — 운영 배포 전 실제 키로 교체 필요");
+        }
+    }
 
     @Override
     public String getProviderCode() { return "TOSS"; }
@@ -105,7 +131,7 @@ public class TossPaymentProvider implements PaymentProvider {
     /** Map → 유효한 JSON 문자열 변환 */
     private String toJson(Map<String, Object> map) {
         try {
-            return OBJECT_MAPPER.writeValueAsString(map);
+            return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize response to JSON", e);
             return "{}";

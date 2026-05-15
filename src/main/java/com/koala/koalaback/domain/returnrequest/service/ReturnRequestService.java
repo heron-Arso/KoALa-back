@@ -8,6 +8,7 @@ import com.koala.koalaback.domain.payment.service.PaymentService;
 import com.koala.koalaback.domain.returnrequest.dto.ReturnRequestDto;
 import com.koala.koalaback.domain.returnrequest.entity.ReturnRequest;
 import com.koala.koalaback.domain.returnrequest.repository.ReturnRequestRepository;
+import com.koala.koalaback.domain.sku.service.StockService;
 import com.koala.koalaback.domain.user.entity.User;
 import com.koala.koalaback.domain.user.service.UserService;
 import com.koala.koalaback.global.exception.BusinessException;
@@ -34,6 +35,7 @@ public class ReturnRequestService {
     private final UserService userService;
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
+    private final StockService stockService;
     private final CodeGenerator codeGenerator;
 
     /** 사용자 — 반품/교환 신청 */
@@ -119,6 +121,16 @@ public class ReturnRequestService {
 
             returnRequest.approve(refundAmt, req.getAdminMemo());
 
+            // 반품(RETURN) 승인 시 재고 복구 — 교환(EXCHANGE)은 교환 완료 처리 시점에 별도 처리
+            if ("RETURN".equals(returnRequest.getReturnType())) {
+                returnRequest.getOrder().getOrderItems().forEach(item -> {
+                    if (item.getSku() != null) {
+                        stockService.restoreByReturn(item.getSku().getId(), item.getQuantity(), item.getId());
+                    }
+                });
+                log.info("Stock restored on return approval: returnNo={}", returnNo);
+            }
+
             // CAPTURED 결제 자동 환불
             paymentRepository.findTopByOrderIdOrderByCreatedAtDesc(returnRequest.getOrder().getId())
                     .filter(p -> "CAPTURED".equals(p.getStatus()))
@@ -129,8 +141,10 @@ public class ReturnRequestService {
                             log.info("Return refund success: paymentNo={}, amount={}",
                                     p.getPaymentNo(), refundAmt);
                         } catch (Exception e) {
-                            log.warn("Return refund failed (manual required): paymentNo={}, error={}",
-                                    p.getPaymentNo(), e.getMessage());
+                            log.error("Return refund FAILED — manual action required: paymentNo={}, returnNo={}, error={}",
+                                    p.getPaymentNo(), returnNo, e.getMessage());
+                            paymentService.recordRefundFailure(p.getPaymentNo(),
+                                    "반품 승인 환불 실패 — 수동처리 필요: " + e.getMessage());
                         }
                     });
 
@@ -153,6 +167,15 @@ public class ReturnRequestService {
         ReturnRequest returnRequest = getByReturnNo(returnNo);
         if (!"APPROVED".equals(returnRequest.getStatus())) {
             throw new BusinessException(ErrorCode.RETURN_REQUEST_NOT_ALLOWED);
+        }
+        // 교환(EXCHANGE) 완료 처리 시 재고 복구 — 반품은 APPROVE 시점에 이미 처리됨
+        if ("EXCHANGE".equals(returnRequest.getReturnType())) {
+            returnRequest.getOrder().getOrderItems().forEach(item -> {
+                if (item.getSku() != null) {
+                    stockService.restoreByReturn(item.getSku().getId(), item.getQuantity(), item.getId());
+                }
+            });
+            log.info("Stock restored on exchange completion: returnNo={}", returnNo);
         }
         returnRequest.complete();
         log.info("Return completed: returnNo={}", returnNo);

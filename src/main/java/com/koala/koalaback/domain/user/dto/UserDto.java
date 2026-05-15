@@ -4,6 +4,7 @@ import com.koala.koalaback.domain.user.entity.User;
 import com.koala.koalaback.domain.user.entity.UserAddress;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,7 +20,13 @@ public class UserDto {
         @NotBlank @Email
         private String email;
 
-        @NotBlank @Size(min = 8, max = 64)
+        /** 8~64자, 영문자 + 숫자/특수문자 각 1자 이상 포함 */
+        @NotBlank
+        @Size(min = 8, max = 64)
+        @Pattern(
+            regexp = "^(?=.*[A-Za-z])(?=.*[\\d\\W]).{8,64}$",
+            message = "비밀번호는 8자 이상이며 영문자와 숫자/특수문자를 각각 1자 이상 포함해야 합니다."
+        )
         private String password;
 
         @NotBlank @Size(max = 100)
@@ -51,7 +58,12 @@ public class UserDto {
         @NotBlank
         private String currentPassword;
 
-        @NotBlank @Size(min = 8, max = 64)
+        @NotBlank
+        @Size(min = 8, max = 64)
+        @Pattern(
+            regexp = "^(?=.*[A-Za-z])(?=.*[\\d\\W]).{8,64}$",
+            message = "비밀번호는 8자 이상이며 영문자와 숫자/특수문자를 각각 1자 이상 포함해야 합니다."
+        )
         private String newPassword;
     }
 

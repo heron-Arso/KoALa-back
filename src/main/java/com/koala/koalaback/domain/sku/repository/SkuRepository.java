@@ -1,9 +1,11 @@
 package com.koala.koalaback.domain.sku.repository;
 
 import com.koala.koalaback.domain.sku.entity.Sku;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,6 +15,14 @@ import java.util.Optional;
 public interface SkuRepository extends JpaRepository<Sku, Long> {
 
     Optional<Sku> findBySkuCode(String skuCode);
+
+    /**
+     * 재고 차감 시 사용하는 비관적 쓰기 락.
+     * 동시 주문으로 인한 재고 Race Condition 방지 — 트랜잭션 종료까지 row 잠금.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Sku s WHERE s.id = :id")
+    Optional<Sku> findByIdForUpdate(@Param("id") Long id);
 
     Optional<Sku> findBySlug(String slug);
 
@@ -26,12 +36,17 @@ public interface SkuRepository extends JpaRepository<Sku, Long> {
     @Query("SELECT s FROM Sku s WHERE s.genre = :genre AND s.status = 'ACTIVE' AND s.deletedAt IS NULL")
     Page<Sku> findActiveByGenre(@Param("genre") String genre, Pageable pageable);
 
-    /** 키워드 검색 (name, description) */
+    /**
+     * 키워드 검색 (name, description).
+     * ESCAPE '\\' 를 사용해 LIKE 와일드카드(%, _)를 안전하게 처리합니다.
+     * 호출부에서 반드시 {@link com.koala.koalaback.global.util.LikeEscapeUtil#escape(String)} 로
+     * 파라미터를 이스케이프한 뒤 %keyword% 형태로 전달하세요.
+     */
     @Query("""
         SELECT s FROM Sku s
         WHERE s.status = 'ACTIVE'
           AND s.deletedAt IS NULL
-          AND (s.name LIKE %:keyword% OR s.description LIKE %:keyword%)
+          AND (s.name LIKE :keyword ESCAPE '\\\\' OR s.description LIKE :keyword ESCAPE '\\\\')
         """)
     Page<Sku> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 

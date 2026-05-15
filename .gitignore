@@ -1,7 +1,7 @@
 HELP.md
 
 .claude
-
+.application-local.yml
 
 .gradle
 build/
@@ -49,4 +49,8 @@ out/
 
 # 로컬 개발 설정 (민감 정보 포함 가능)
 src/main/resources/application-local.yml
+src/main/resources/application.yml
+src/main/resources/application-prod.yml
 src/test/resources/application-local.yml
+src/test/resources/application-prod.yml
+src/test/resources/application.yml

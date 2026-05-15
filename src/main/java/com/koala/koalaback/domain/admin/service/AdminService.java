@@ -11,6 +11,7 @@ import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
 import com.koala.koalaback.global.security.JwtProvider;
 import com.koala.koalaback.global.util.CodeGenerator;
+import com.koala.koalaback.global.util.IpResolverUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -83,11 +84,12 @@ public class AdminService {
         int after = before + req.getDelta();
 
         Admin admin = getAdminById(adminId);
+        int actualAfter = stockService.getStock(sku.getId()); // 실제 조정 후 재고 (계산값 아님)
         saveAuditLog(admin, "STOCK_ADJUST", "skus", sku.getId(),
                 httpReq.getRequestURI(), httpReq.getMethod(),
-                httpReq.getRemoteAddr(),
+                resolveClientIp(httpReq),
                 "{\"stock\":" + before + "}",
-                "{\"stock\":" + after + "}",
+                "{\"stock\":" + actualAfter + "}",
                 req.getMemo());
     }
 
@@ -109,17 +111,9 @@ public class AdminService {
 
     // ── Private helpers ───────────────────────────────────
 
+    /** 감사로그용 IP 추출 — 스푸핑 방지 로직 포함 (@see IpResolverUtil) */
     private String resolveClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            int comma = xff.indexOf(',');
-            return (comma > 0 ? xff.substring(0, comma) : xff).trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
-        }
-        return request.getRemoteAddr();
+        return IpResolverUtil.resolve(request);
     }
 
     private void saveAuditLog(Admin admin, String actionType, String targetType,

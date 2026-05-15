@@ -150,6 +150,17 @@ public class OrderService {
             throw new BusinessException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
         }
 
+        // ① 환불 먼저 시도 — 실패 시 예외를 던져 트랜잭션 전체 롤백
+        // (취소 성공 후 환불 실패로 사용자가 돈을 돌려받지 못하는 상황 방지)
+        paymentRepository.findTopByOrderIdOrderByCreatedAtDesc(order.getId())
+                .filter(p -> "CAPTURED".equals(p.getStatus()))
+                .ifPresent(p -> {
+                    paymentService.cancel(p.getPaymentNo(),
+                            new PaymentDto.CancelRequest("주문취소", null));
+                    log.info("Payment refunded on order cancel: paymentNo={}", p.getPaymentNo());
+                });
+
+        // ② 환불 성공(또는 결제 없음) 후 재고 복구 및 주문 취소
         order.getOrderItems().forEach(item -> {
             if (item.getSku() != null) {
                 stockService.restore(item.getSku().getId(), item.getQuantity(),
@@ -159,21 +170,6 @@ public class OrderService {
 
         order.cancel();
         log.info("Order cancelled: orderNo={}, userId={}", orderNo, userId);
-
-        // 결제 환불 자동 연동 — CAPTURED 상태 결제만 환불
-        paymentRepository.findTopByOrderIdOrderByCreatedAtDesc(order.getId())
-                .filter(p -> "CAPTURED".equals(p.getStatus()))
-                .ifPresent(p -> {
-                    try {
-                        paymentService.cancel(p.getPaymentNo(),
-                                new PaymentDto.CancelRequest("주문취소", null));
-                        log.info("Payment refunded on order cancel: paymentNo={}", p.getPaymentNo());
-                    } catch (Exception e) {
-                        // 주문 취소는 성공 처리, 환불 실패는 로그로 추적 후 수동 처리
-                        log.warn("Payment refund failed (manual action required): paymentNo={}, error={}",
-                                p.getPaymentNo(), e.getMessage());
-                    }
-                });
 
         return OrderDto.OrderDetailResponse.from(order);
     }
@@ -210,8 +206,10 @@ public class OrderService {
                         log.info("Admin refund success: paymentNo={}, amount={}",
                                 p.getPaymentNo(), req.getCancelAmount());
                     } catch (Exception e) {
-                        log.warn("Admin refund failed (manual required): paymentNo={}, error={}",
-                                p.getPaymentNo(), e.getMessage());
+                        log.error("Admin refund FAILED — manual action required: paymentNo={}, orderNo={}, error={}",
+                                p.getPaymentNo(), orderNo, e.getMessage());
+                        paymentService.recordRefundFailure(p.getPaymentNo(),
+                                "어드민 강제취소 환불 실패 — 수동처리 필요: " + e.getMessage());
                     }
                 });
 

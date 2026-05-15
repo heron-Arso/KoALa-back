@@ -1,5 +1,6 @@
 package com.koala.koalaback.global.security;
 
+import com.koala.koalaback.global.util.IpResolverUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -115,20 +116,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 클라이언트 실제 IP 해석.
-     * 로드밸런서(ALB/Nginx) 뒤: X-Forwarded-For 첫 번째 항목이 원본 IP
+     * 클라이언트 실제 IP 해석 (스푸핑 방지).
+     * 신뢰된 프록시(사설망/로컬)에서 온 요청일 때만 X-Forwarded-For 를 신뢰합니다.
+     *
+     * @see IpResolverUtil
      */
     private String resolveClientIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            int comma = xff.indexOf(',');
-            return (comma > 0 ? xff.substring(0, comma) : xff).trim();
-        }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
-        }
-        return request.getRemoteAddr();
+        return IpResolverUtil.resolve(request);
     }
 
     private void writeRateLimitResponse(HttpServletResponse response) throws IOException {

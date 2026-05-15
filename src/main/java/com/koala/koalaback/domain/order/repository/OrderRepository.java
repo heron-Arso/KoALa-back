@@ -19,11 +19,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    /** 회원ID / 주문자명 / 전화번호 중 하나라도 일치하면 반환 */
+    /**
+     * 회원ID / 주문자명 / 전화번호 중 하나라도 일치하면 반환 (OR 조건)
+     * - 파라미터가 null 이면 해당 조건을 무시 (= 전체 매칭)
+     * - 하나라도 non-null 이면 해당 항목으로만 필터링
+     */
     @Query("SELECT o FROM Order o WHERE " +
-           "(:userId   IS NULL OR o.user.id      = :userId) AND " +
-           "(:name     IS NULL OR o.ordererName  LIKE %:name%) AND " +
-           "(:phone    IS NULL OR o.ordererPhone LIKE %:phone%) " +
+           "(:userId IS NULL AND :name IS NULL AND :phone IS NULL) OR " +
+           "(:userId IS NOT NULL AND o.user.id = :userId) OR " +
+           "(:name  IS NOT NULL AND o.ordererName  LIKE %:name%) OR " +
+           "(:phone IS NOT NULL AND o.ordererPhone LIKE %:phone%) " +
            "ORDER BY o.createdAt DESC")
     Page<Order> searchOrders(
             @Param("userId") Long userId,

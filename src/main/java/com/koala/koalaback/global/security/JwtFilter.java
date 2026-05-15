@@ -60,11 +60,27 @@ public class JwtFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(BEARER_PREFIX.length());
         }
-        // 2. HttpOnly cookie fallback
-        Cookie cookie = WebUtils.getCookie(request, "accessToken");
-        if (cookie != null) {
-            return cookie.getValue();
+
+        String uri = request.getRequestURI();
+
+        // 2. Admin HttpOnly cookie — /admin/api/** 경로에서만 신뢰
+        //    유저 API 경로에서 admin_token 쿠키를 수락하면 어드민 토큰으로
+        //    일반 사용자 API를 호출할 수 있으므로 경로를 엄격히 제한
+        if (uri.startsWith("/admin/api/")) {
+            Cookie adminCookie = WebUtils.getCookie(request, "admin_token");
+            if (adminCookie != null && StringUtils.hasText(adminCookie.getValue())) {
+                return adminCookie.getValue();
+            }
         }
+
+        // 3. 일반 사용자 HttpOnly cookie — /admin/** 경로에서는 사용 안 함
+        if (!uri.startsWith("/admin/")) {
+            Cookie accessCookie = WebUtils.getCookie(request, "accessToken");
+            if (accessCookie != null) {
+                return accessCookie.getValue();
+            }
+        }
+
         return null;
     }
 }

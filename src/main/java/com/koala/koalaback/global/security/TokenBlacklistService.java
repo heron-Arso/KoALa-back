@@ -37,14 +37,15 @@ public class TokenBlacklistService {
 
     /**
      * 토큰 블랙리스트 여부 확인.
-     * Redis 장애 시 false 반환 (보수적 허용 — 장애 중 재사용 가능성 있으나 단기간 허용)
+     * Redis 장애 시 true 반환 (fail-secure) — 로그아웃된 토큰의 재사용을 차단.
+     * Redis 복구 전까지 해당 사용자는 재로그인이 필요합니다.
      */
     public boolean isBlacklisted(String token) {
         try {
             return Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX + token));
         } catch (Exception e) {
-            log.warn("[TokenBlacklist] Redis 조회 실패 — 블랙리스트 검사 생략: {}", e.getMessage());
-            return false;
+            log.warn("[TokenBlacklist] Redis 조회 실패 — 보안상 블랙리스트 처리로 간주 (fail-secure): {}", e.getMessage());
+            return true; // fail-secure: Redis 장애 시 토큰 재사용 차단
         }
     }
 }
