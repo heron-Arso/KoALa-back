@@ -5,6 +5,7 @@ import com.koala.koalaback.domain.user.entity.RefreshToken;
 import com.koala.koalaback.domain.user.entity.User;
 import com.koala.koalaback.domain.user.entity.UserAddress;
 import com.koala.koalaback.domain.user.repository.RefreshTokenRepository;
+import com.koala.koalaback.domain.user.repository.UserAddressRepository;
 import com.koala.koalaback.domain.user.repository.UserRepository;
 import com.koala.koalaback.global.exception.BusinessException;
 import com.koala.koalaback.global.exception.ErrorCode;
@@ -23,6 +24,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserAddressRepository userAddressRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -148,8 +150,8 @@ public class UserService {
     // ── 주소 조회 ─────────────────────────────────────────
 
     public List<UserDto.AddressResponse> getAddresses(Long userId) {
-        User user = getUserById(userId);
-        return user.getAddresses().stream()
+        return userAddressRepository.findByUserIdOrderByIsDefaultDescCreatedAtDesc(userId)
+                .stream()
                 .map(UserDto.AddressResponse::from)
                 .toList();
     }
@@ -164,8 +166,9 @@ public class UserService {
         boolean isDefault = user.getAddresses().isEmpty() ||
                 Boolean.TRUE.equals(req.getIsDefault());
 
+        // 기본 배송지로 지정 시 기존 기본 해제
         if (isDefault) {
-            user.getAddresses().forEach(a -> a.setDefault(false));
+            userAddressRepository.clearDefaultByUserId(userId);
         }
 
         UserAddress address = UserAddress.builder()
@@ -179,8 +182,8 @@ public class UserService {
                 .isDefault(isDefault)
                 .build();
 
-        user.getAddresses().add(address);
-        return UserDto.AddressResponse.from(address);
+        // 명시적 save로 IDENTITY 전략 ID 즉시 확보
+        return UserDto.AddressResponse.from(userAddressRepository.save(address));
     }
 
     // ── 주소 수정 ─────────────────────────────────────────
@@ -188,10 +191,13 @@ public class UserService {
     @Transactional
     public UserDto.AddressResponse updateAddress(Long userId, Long addressId,
                                                  UserDto.AddressUpdateRequest req) {
-        UserAddress address = getUserById(userId).getAddresses().stream()
-                .filter(a -> a.getId().equals(addressId))
-                .findFirst()
+        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        // isDefault: true로 변경 시 다른 주소 기본 해제 → 현재 주소 기본 설정
+        if (Boolean.TRUE.equals(req.getIsDefault()) && !Boolean.TRUE.equals(address.getIsDefault())) {
+            userAddressRepository.clearDefaultByUserId(userId);
+        }
 
         address.update(
                 req.getLabel(),
@@ -199,7 +205,8 @@ public class UserService {
                 req.getRecipientPhone(),
                 req.getZipCode(),
                 req.getAddress1(),
-                req.getAddress2()
+                req.getAddress2(),
+                req.getIsDefault()
         );
 
         return UserDto.AddressResponse.from(address);
@@ -209,21 +216,19 @@ public class UserService {
 
     @Transactional
     public void setDefaultAddress(Long userId, Long addressId) {
-        User user = getUserById(userId);
-        user.getAddresses().forEach(a -> a.setDefault(false));
-        user.getAddresses().stream()
-                .filter(a -> a.getId().equals(addressId))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND))
-                .setDefault(true);
+        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        userAddressRepository.clearDefaultByUserId(userId);
+        address.setDefault(true);
     }
 
     // ── 주소 삭제 ─────────────────────────────────────────
 
     @Transactional
     public void deleteAddress(Long userId, Long addressId) {
-        User user = getUserById(userId);
-        user.getAddresses().removeIf(a -> a.getId().equals(addressId));
+        UserAddress address = userAddressRepository.findByIdAndUserId(addressId, userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
+        userAddressRepository.delete(address);
     }
 
     // ── 공통 유틸 ─────────────────────────────────────────

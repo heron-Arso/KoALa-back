@@ -53,13 +53,16 @@ public class UserAddress extends BaseTimeEntity {
     }
 
     public void update(String label, String recipientName, String recipientPhone,
-                       String zipCode, String address1, String address2) {
+                       String zipCode, String address1, String address2, Boolean isDefault) {
         this.label = label;
         this.recipientName = recipientName;
         this.recipientPhone = recipientPhone;
         this.zipCode = zipCode;
         this.address1 = address1;
         this.address2 = address2;
+        if (isDefault != null) {
+            this.isDefault = isDefault;
+        }
     }
 
     public void setDefault(boolean isDefault) {

@@ -156,6 +156,9 @@ public class UserDto {
         private String address1;
 
         private String address2;
+
+        /** null 이면 현재 값 유지, true 이면 기본 배송지로 설정 */
+        private Boolean isDefault;
     }
 
     // ── Address Response ──────────────────────────────────
