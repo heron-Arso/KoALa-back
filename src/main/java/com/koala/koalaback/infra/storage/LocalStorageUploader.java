@@ -34,8 +34,14 @@ public class LocalStorageUploader implements StorageUploader {
 
     // 허용된 mediaRole 목록 — 이 외의 값은 경로 구성에 사용 불가
     private static final Set<String> ALLOWED_ROLES = Set.of(
-            "hero", "gallery", "spine_360", "profile", "banner",
-            "thumbnail", "detail", "cover"
+            // 공통
+            "hero", "gallery", "spine_360", "profile", "thumbnail", "detail", "cover",
+            // 배너
+            "banner", "banners",
+            // 아티스트
+            "interview_video", "interview_image", "studio", "hands",
+            // SKU/상품
+            "main"
     );
 
     @Override
