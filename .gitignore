@@ -1,6 +1,14 @@
 HELP.md
 
-.claude
+# Claude AI 내부 파일
+.claude/
+
+# 업로드 이미지 (S3에서 관리)
+uploads/
+
+# 불필요한 압축 파일
+*.zip
+
 .application-local.yml
 
 .gradle
@@ -48,12 +56,8 @@ out/
 !.env.properties.example
 
 # 로컬 개발 설정 (민감 정보 포함 가능)
-src/main/resources/application-local.yml
-src/main/resources/application.yml
-src/main/resources/application-prod.yml
-src/test/resources/application-local.yml
-src/test/resources/application-prod.yml
-src/test/resources/application.yml
+src/main/resources/application*.yml
+src/test/resources/application*.yml
 
 # Firebase 서비스 계정 키 (민감 정보 — 절대 커밋 금지)
 src/main/resources/firebase-service-account.json
