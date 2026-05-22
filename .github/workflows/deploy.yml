@@ -65,6 +65,7 @@ jobs:
               -Xms512m -Xmx1024m \
               -jar arsoback-0.0.1-SNAPSHOT.jar \
               --spring.profiles.active=prod \
+              --spring.config.additional-location=file:/home/ubuntu/app/ \
               > /home/ubuntu/app/app.log 2>&1 &
 
             echo "Deployed PID $!"
