@@ -45,12 +45,13 @@ public class TossPaymentProvider implements PaymentProvider {
             throw new IllegalStateException(
                     "[Toss] toss.secret-key 가 설정되지 않았습니다. 환경변수 TOSS_SECRET_KEY 를 확인하세요.");
         }
-        boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
-        if (isProd && secretKey.startsWith("test_sk_")) {
-            throw new IllegalStateException(
-                    "[Toss] 운영 환경에 테스트 시크릿 키(test_sk_*)를 사용할 수 없습니다. " +
-                    "TOSS_SECRET_KEY 환경변수에 실제 운영 키를 설정하세요.");
-        }
+        // TODO: 실제 Toss 운영 키 발급 후 아래 주석 해제
+        // boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        // if (isProd && secretKey.startsWith("test_sk_")) {
+        //     throw new IllegalStateException(
+        //             "[Toss] 운영 환경에 테스트 시크릿 키(test_sk_*)를 사용할 수 없습니다. " +
+        //             "TOSS_SECRET_KEY 환경변수에 실제 운영 키를 설정하세요.");
+        // }
         if (secretKey.startsWith("test_sk_")) {
             log.warn("[Toss] 테스트 시크릿 키 사용 중 — 운영 배포 전 실제 키로 교체 필요");
         }

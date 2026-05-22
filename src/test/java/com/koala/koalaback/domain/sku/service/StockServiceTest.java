@@ -36,8 +36,9 @@ class StockServiceTest {
         Long skuId = 1L;
         Sku sku = mock(Sku.class);
 
-        given(skuRepository.findById(skuId)).willReturn(Optional.of(sku));
-        given(stockCacheService.getOrLoad(any(), any())).willReturn(10);
+        // deduct()는 findByIdForUpdate + sumDeltaBySkuId 직접 호출
+        given(skuRepository.findByIdForUpdate(skuId)).willReturn(Optional.of(sku));
+        given(stockLedgerRepository.sumDeltaBySkuId(skuId)).willReturn(10);
         given(stockLedgerRepository.save(any())).willReturn(null);
 
         // when
@@ -55,8 +56,8 @@ class StockServiceTest {
         Long skuId = 1L;
         Sku sku = mock(Sku.class);
 
-        given(skuRepository.findById(skuId)).willReturn(Optional.of(sku));
-        given(stockCacheService.getOrLoad(any(), any())).willReturn(2);
+        given(skuRepository.findByIdForUpdate(skuId)).willReturn(Optional.of(sku));
+        given(stockLedgerRepository.sumDeltaBySkuId(skuId)).willReturn(2);
 
         // when & then
         assertThatThrownBy(() -> stockService.deduct(skuId, 5, "order_items", null))

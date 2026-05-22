@@ -76,12 +76,12 @@ public class ArtistDto {
     @Getter
     public static class CareerAddRequest {
         @NotBlank
-        private String category;   // 학력 | 개인전 | 그룹전
+        private String category;   // 학력 | 개인전 | 그룹전 | 수상 | 소장 | 방송
 
-        @NotNull @Min(1900) @Max(2100)
+        @Min(1900) @Max(2100)   // null 허용 — 연도 미공개
         private Integer year;
 
-        @NotBlank @Size(max = 500)
+        @NotBlank @Size(max = 1000)
         private String content;
 
         private Integer sortOrder;
@@ -92,10 +92,10 @@ public class ArtistDto {
         @NotBlank
         private String category;
 
-        @NotNull @Min(1900) @Max(2100)
+        @Min(1900) @Max(2100)   // null 허용 — 연도 미공개
         private Integer year;
 
-        @NotBlank @Size(max = 500)
+        @NotBlank @Size(max = 1000)
         private String content;
 
         private Integer sortOrder;

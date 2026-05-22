@@ -188,4 +188,9 @@ public class UserDto {
                     .build();
         }
     }
+
+    /** FCM 토큰 저장 요청 */
+    public record PushTokenRequest(
+            @NotBlank String token
+    ) {}
 }

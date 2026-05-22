@@ -231,6 +231,13 @@ public class UserService {
         userAddressRepository.delete(address);
     }
 
+    // ── FCM 토큰 ──────────────────────────────────────────
+
+    @Transactional
+    public void saveFcmToken(Long userId, String token) {
+        getUserById(userId).updateFcmToken(token);
+    }
+
     // ── 공통 유틸 ─────────────────────────────────────────
 
     public User getUserById(Long userId) {
@@ -271,7 +278,7 @@ public class UserService {
 
     // ── 토큰 발급 공통 로직 ───────────────────────────────
 
-    private UserDto.TokenResponse issueTokens(User user) {
+    public UserDto.TokenResponse issueTokens(User user) {
         String accessToken = jwtProvider.createAccessToken(user.getId(), "USER");
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
 

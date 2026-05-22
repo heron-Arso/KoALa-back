@@ -82,7 +82,12 @@ public enum ErrorCode {
     // Return Request
     RETURN_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "RR001", "반품/교환 요청을 찾을 수 없습니다."),
     RETURN_REQUEST_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "RR002", "반품/교환 신청이 불가능한 상태입니다."),
-    RETURN_REQUEST_ALREADY_EXISTS(HttpStatus.CONFLICT, "RR003", "이미 반품/교환 요청이 접수된 주문입니다.");
+    RETURN_REQUEST_ALREADY_EXISTS(HttpStatus.CONFLICT, "RR003", "이미 반품/교환 요청이 접수된 주문입니다."),
+
+    // Toss Login (앱인토스)
+    TOSS_LOGIN_FAILED(HttpStatus.BAD_GATEWAY, "TL001", "토스 로그인 처리 중 오류가 발생했습니다."),
+    TOSS_TOKEN_EXCHANGE_FAILED(HttpStatus.BAD_GATEWAY, "TL002", "토스 인가 코드 교환에 실패했습니다."),
+    TOSS_USER_INFO_FAILED(HttpStatus.BAD_GATEWAY, "TL003", "토스 사용자 정보 조회에 실패했습니다.");
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

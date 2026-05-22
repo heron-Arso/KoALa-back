@@ -97,12 +97,14 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/password-reset/send",
                                 "/api/v1/auth/password-reset/verify",
-                                "/api/v1/auth/password-reset/reset"
+                                "/api/v1/auth/password-reset/reset",
+                                "/api/v1/auth/toss/login"       // 앱인토스 토스 로그인
                         ).permitAll();
                         auth.requestMatchers(HttpMethod.GET,
                                 "/api/v1/artists/**",
                                 "/api/v1/skus/**",
-                                "/api/v1/banners/**").permitAll();
+                                "/api/v1/banners/**",
+                                "/api/v1/app/version").permitAll();
                         // 팔로우/언팔로우는 로그인 필수
                         auth.requestMatchers(HttpMethod.POST, "/api/v1/artists/*/follow").authenticated();
                         auth.requestMatchers(HttpMethod.DELETE, "/api/v1/artists/*/follow").authenticated();
@@ -187,7 +189,9 @@ public class SecurityConfig {
             config.setAllowedOriginPatterns(List.of(
                     "https://koala-art.co.kr",
                     "https://www.koala-art.co.kr",
-                    "capacitor://localhost"   // Capacitor 모바일 앱 (네이티브 WebView)
+                    "capacitor://localhost",        // Capacitor 모바일 앱 (네이티브 WebView)
+                    "https://*.toss.im",            // 앱인토스 미니앱 WebView
+                    "https://*.apps-in-toss.toss.im" // 앱인토스 CDN
             ));
         } else {
             // 로컬/개발: localhost 개발 서버 허용

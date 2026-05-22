@@ -109,6 +109,16 @@ public class UserController {
         return ApiResponse.ok();
     }
 
+    // ── FCM ───────────────────────────────────────────────
+
+    @PostMapping("/api/v1/users/me/push-token")
+    public ApiResponse<Void> savePushToken(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody UserDto.PushTokenRequest req) {
+        userService.saveFcmToken(userId, req.token());
+        return ApiResponse.ok();
+    }
+
     // ── Address ───────────────────────────────────────────
 
     @GetMapping("/api/v1/users/me/addresses")

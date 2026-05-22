@@ -54,6 +54,9 @@ public class Sku extends BaseTimeEntity {
     private Integer editionSize;
     private Integer editionNumber;
 
+    @Column(columnDefinition = "JSON")
+    private String badges;              // e.g. [{"text":"진품 보증","type":"blue"}]
+
     @Column(length = 700)
     private String primaryImageUrl;
 
@@ -83,7 +86,8 @@ public class Sku extends BaseTimeEntity {
                String currency, BigDecimal listPrice, BigDecimal salePrice,
                Boolean isLimitedEdition, Integer editionSize, Integer editionNumber,
                String primaryImageUrl, BigDecimal widthCm, BigDecimal heightCm,
-               BigDecimal depthCm, BigDecimal weightKg) {
+               BigDecimal depthCm, BigDecimal weightKg,
+               String badges) {
         this.skuCode = skuCode;
         this.artist = artist;
         this.name = name;
@@ -102,12 +106,15 @@ public class Sku extends BaseTimeEntity {
         this.heightCm = heightCm;
         this.depthCm = depthCm;
         this.weightKg = weightKg;
+        this.badges = badges;
         this.status = "DRAFT";
     }
 
     public void update(String name, String slug, String description,
                        String skuType, String genre,
-                       BigDecimal listPrice, BigDecimal salePrice, String primaryImageUrl) {
+                       BigDecimal listPrice, BigDecimal salePrice, String primaryImageUrl,
+                       Boolean isLimitedEdition, Integer editionSize, Integer editionNumber,
+                       String badges) {
         this.name = name;
         this.slug = slug;
         this.description = description;
@@ -116,6 +123,10 @@ public class Sku extends BaseTimeEntity {
         this.listPrice = listPrice;
         this.salePrice = salePrice;
         this.primaryImageUrl = primaryImageUrl;
+        if (isLimitedEdition != null) this.isLimitedEdition = isLimitedEdition;
+        this.editionSize = editionSize;
+        this.editionNumber = editionNumber;
+        this.badges = badges;
     }
 
     public void publish() {

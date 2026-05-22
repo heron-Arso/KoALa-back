@@ -54,3 +54,6 @@ src/main/resources/application-prod.yml
 src/test/resources/application-local.yml
 src/test/resources/application-prod.yml
 src/test/resources/application.yml
+
+# Firebase 서비스 계정 키 (민감 정보 — 절대 커밋 금지)
+src/main/resources/firebase-service-account.json

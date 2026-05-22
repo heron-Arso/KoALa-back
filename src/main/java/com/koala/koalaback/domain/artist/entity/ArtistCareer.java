@@ -20,10 +20,10 @@ public class ArtistCareer {
     @Column(nullable = false, length = 20)
     private String category;   // 학력 | 개인전 | 그룹전
 
-    @Column(nullable = false)
-    private Integer year;
+    @Column(nullable = true)
+    private Integer year;   // null = 연도 미공개
 
-    @Column(nullable = false, length = 500)
+    @Column(nullable = false, length = 1000)
     private String content;
 
     @Column(nullable = false)

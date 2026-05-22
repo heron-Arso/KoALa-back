@@ -45,6 +45,12 @@ public class User extends BaseTimeEntity {
     private LocalDateTime lastLoginAt;
     private LocalDateTime deletedAt;
 
+    @Column(name = "toss_disconnected_at")
+    private LocalDateTime tossDisconnectedAt;
+
+    @Column(name = "fcm_token", length = 512)
+    private String fcmToken;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAddress> addresses = new ArrayList<>();
 
@@ -102,6 +108,16 @@ public class User extends BaseTimeEntity {
     public void softDelete() {
         this.deletedAt = LocalDateTime.now();
         this.status = "INACTIVE";
+    }
+
+    /** 앱인토스 연결 해제 처리 */
+    public void disconnectToss() {
+        this.tossDisconnectedAt = LocalDateTime.now();
+    }
+
+    /** FCM 토큰 저장/갱신 */
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public void suspend()  { this.status = "SUSPENDED"; }

@@ -113,6 +113,7 @@ public class SkuService {
                 .isLimitedEdition(req.getIsLimitedEdition())
                 .editionSize(req.getEditionSize())
                 .editionNumber(req.getEditionNumber())
+                .badges(req.getBadges())
                 .primaryImageUrl(req.getPrimaryImageUrl())
                 .widthCm(req.getWidthCm())
                 .heightCm(req.getHeightCm())
@@ -133,7 +134,9 @@ public class SkuService {
         }
         sku.update(req.getName(), req.getSlug(), req.getDescription(),
                 req.getSkuType(), req.getGenre(),
-                req.getListPrice(), req.getSalePrice(), req.getPrimaryImageUrl());
+                req.getListPrice(), req.getSalePrice(), req.getPrimaryImageUrl(),
+                req.getIsLimitedEdition(), req.getEditionSize(), req.getEditionNumber(),
+                req.getBadges());
         return toSummary(sku);
     }
 
@@ -238,7 +241,9 @@ public class SkuService {
         if (makePrimary) {
             sku.update(sku.getName(), sku.getSlug(), sku.getDescription(),
                     sku.getSkuType(), sku.getGenre(),
-                    sku.getListPrice(), sku.getSalePrice(), fileUrl);
+                    sku.getListPrice(), sku.getSalePrice(), fileUrl,
+                    sku.getIsLimitedEdition(), sku.getEditionSize(), sku.getEditionNumber(),
+                    sku.getBadges());
         }
 
         return SkuDto.MediaResponse.from(media);

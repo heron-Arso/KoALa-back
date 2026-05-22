@@ -39,6 +39,7 @@ public class SkuDto {
         private Boolean isLimitedEdition;
         private Integer editionSize;
         private Integer editionNumber;
+        private String badges;      // JSON string: [{"text":"진품 보증","type":"blue"}, ...]
         private String primaryImageUrl;
         private BigDecimal widthCm;
         private BigDecimal heightCm;
@@ -62,6 +63,10 @@ public class SkuDto {
         private BigDecimal listPrice;
 
         private BigDecimal salePrice;
+        private Boolean isLimitedEdition;
+        private Integer editionSize;
+        private Integer editionNumber;
+        private String badges;      // JSON string: [{"text":"진품 보증","type":"blue"}, ...]
         private String primaryImageUrl;
     }
 
@@ -105,9 +110,12 @@ public class SkuDto {
         private BigDecimal listPrice;
         private BigDecimal salePrice;
         private BigDecimal effectivePrice;
+        private Boolean isLimitedEdition;
+        private String description;
         private String primaryImageUrl;
         private String status;
         private String artistName;
+        private String artistCode;
         private Integer stockQuantity;
         private BigDecimal avgRating;
         private Integer reviewCount;
@@ -123,9 +131,12 @@ public class SkuDto {
                     .listPrice(sku.getListPrice())
                     .salePrice(sku.getSalePrice())
                     .effectivePrice(sku.getEffectivePrice())
+                    .isLimitedEdition(sku.getIsLimitedEdition())
+                    .description(sku.getDescription())
                     .primaryImageUrl(sku.getPrimaryImageUrl())
                     .status(sku.getStatus())
                     .artistName(sku.getArtist().getName())
+                    .artistCode(sku.getArtist().getArtistCode())
                     .stockQuantity(stock)
                     .avgRating(stats != null ? stats.getAvgRating() : BigDecimal.ZERO)
                     .reviewCount(stats != null ? stats.getReviewCount() : 0)
@@ -150,6 +161,7 @@ public class SkuDto {
         private Boolean isLimitedEdition;
         private Integer editionSize;
         private Integer editionNumber;
+        private String badges;
         private String primaryImageUrl;
         private String arAssetUrl;
         private String arPreviewImageUrl;
@@ -183,6 +195,7 @@ public class SkuDto {
                     .isLimitedEdition(sku.getIsLimitedEdition())
                     .editionSize(sku.getEditionSize())
                     .editionNumber(sku.getEditionNumber())
+                    .badges(sku.getBadges())
                     .primaryImageUrl(sku.getPrimaryImageUrl())
                     .arAssetUrl(sku.getArAssetUrl())
                     .arPreviewImageUrl(sku.getArPreviewImageUrl())

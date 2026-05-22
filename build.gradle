@@ -92,6 +92,9 @@ dependencies {
 
 
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // ── Firebase Admin SDK (FCM 푸시 알림) ───────────────────
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
     // ── Test ──────────────────────────────────────────────
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
