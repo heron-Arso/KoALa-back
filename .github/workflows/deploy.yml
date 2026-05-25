@@ -70,14 +70,16 @@ jobs:
 
             echo "Deployed PID $!"
 
-            # 기동 확인 (최대 60초 대기)
-            for i in $(seq 1 12); do
+            # 기동 확인 (최대 120초 대기)
+            for i in $(seq 1 24); do
               sleep 5
               if curl -sf http://localhost:8080/actuator/health > /dev/null; then
                 echo "Health check passed"
                 exit 0
               fi
-              echo "Waiting... ($i/12)"
+              echo "Waiting... ($i/24)"
             done
-            echo "Health check failed"
+
+            echo "Health check failed — 최근 로그:"
+            tail -30 /home/ubuntu/app/app.log
             exit 1
