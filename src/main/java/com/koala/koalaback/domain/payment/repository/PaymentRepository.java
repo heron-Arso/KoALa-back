@@ -1,6 +1,6 @@
 package com.koala.koalaback.domain.payment.repository;
 
-import com.koala.koalaback.api.admin.AdminDashboardController;
+import com.koala.koalaback.domain.payment.dto.DailyRevenueDto;
 import com.koala.koalaback.domain.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,7 +26,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     BigDecimal sumTotalApprovedAmount();
 
     @Query("""
-        SELECT new com.koala.koalaback.api.admin.AdminDashboardController$DailyRevenue(
+        SELECT new com.koala.koalaback.domain.payment.dto.DailyRevenueDto(
             FUNCTION('DATE_FORMAT', p.approvedAt, '%Y-%m-%d'),
             COALESCE(SUM(p.approvedAmount), 0),
             COUNT(p)
@@ -36,5 +36,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
         GROUP BY FUNCTION('DATE_FORMAT', p.approvedAt, '%Y-%m-%d')
         ORDER BY FUNCTION('DATE_FORMAT', p.approvedAt, '%Y-%m-%d') ASC
         """)
-    List<AdminDashboardController.DailyRevenue> findDailyRevenueSince(@Param("from") LocalDateTime from);
+    List<DailyRevenueDto> findDailyRevenueSince(@Param("from") LocalDateTime from);
 }

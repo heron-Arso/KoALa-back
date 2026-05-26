@@ -1,6 +1,7 @@
 package com.koala.koalaback.api.admin;
 
 import com.koala.koalaback.domain.order.repository.OrderRepository;
+import com.koala.koalaback.domain.payment.dto.DailyRevenueDto;
 import com.koala.koalaback.domain.payment.repository.PaymentRepository;
 import com.koala.koalaback.domain.user.repository.UserRepository;
 import com.koala.koalaback.global.response.ApiResponse;
@@ -46,7 +47,7 @@ public class AdminDashboardController {
     }
 
     @GetMapping("/daily-revenue")
-    public ApiResponse<List<DailyRevenue>> getDailyRevenue() {
+    public ApiResponse<List<DailyRevenueDto>> getDailyRevenue() {
         LocalDateTime from = LocalDate.now().minusDays(13).atStartOfDay();
         return ApiResponse.ok(paymentRepository.findDailyRevenueSince(from));
     }
@@ -63,12 +64,5 @@ public class AdminDashboardController {
         private long totalUsers;
         private long pendingOrders;
         private long processingOrders;
-    }
-
-    @Getter @Builder
-    public static class DailyRevenue {
-        private String date;
-        private BigDecimal revenue;
-        private long orderCount;
     }
 }
