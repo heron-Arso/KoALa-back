@@ -49,7 +49,11 @@ public class AdminDashboardController {
     @GetMapping("/daily-revenue")
     public ApiResponse<List<DailyRevenueDto>> getDailyRevenue() {
         LocalDateTime from = LocalDate.now().minusDays(13).atStartOfDay();
-        return ApiResponse.ok(paymentRepository.findDailyRevenueSince(from));
+        List<DailyRevenueDto> result = paymentRepository.findDailyRevenueSince(from)
+                .stream()
+                .map(p -> new DailyRevenueDto(p.getDate(), p.getRevenue(), p.getOrderCount()))
+                .toList();
+        return ApiResponse.ok(result);
     }
 
     @Getter @Builder

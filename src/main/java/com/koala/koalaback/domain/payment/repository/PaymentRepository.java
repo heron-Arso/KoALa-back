@@ -1,6 +1,6 @@
 package com.koala.koalaback.domain.payment.repository;
 
-import com.koala.koalaback.domain.payment.dto.DailyRevenueDto;
+import com.koala.koalaback.domain.payment.dto.DailyRevenueProjection;
 import com.koala.koalaback.domain.payment.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -25,16 +25,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COALESCE(SUM(p.approvedAmount), 0) FROM Payment p WHERE p.status = 'CAPTURED'")
     BigDecimal sumTotalApprovedAmount();
 
-    @Query("""
-        SELECT new com.koala.koalaback.domain.payment.dto.DailyRevenueDto(
-            FUNCTION('DATE_FORMAT', p.approvedAt, '%Y-%m-%d'),
-            COALESCE(SUM(p.approvedAmount), 0),
-            COUNT(p)
-        )
-        FROM Payment p
-        WHERE p.approvedAt >= :from AND p.status = 'CAPTURED'
-        GROUP BY FUNCTION('DATE_FORMAT', p.approvedAt, '%Y-%m-%d')
-        ORDER BY FUNCTION('DATE_FORMAT', p.approvedAt, '%Y-%m-%d') ASC
-        """)
-    List<DailyRevenueDto> findDailyRevenueSince(@Param("from") LocalDateTime from);
+    /**
+     * 네이티브 쿼리 + 인터페이스 프로젝션 사용 (Hibernate 7 JPQL new 생성자 표현식 비호환 우회)
+     * order_count alias → Spring Data가 getOrderCount() 로 자동 매핑
+     */
+    @Query(value = """
+        SELECT DATE_FORMAT(p.approved_at, '%Y-%m-%d')  AS date,
+               COALESCE(SUM(p.approved_amount), 0)     AS revenue,
+               COUNT(*)                                 AS order_count
+        FROM payments p
+        WHERE p.approved_at >= :from
+          AND p.status = 'CAPTURED'
+        GROUP BY DATE_FORMAT(p.approved_at, '%Y-%m-%d')
+        ORDER BY DATE_FORMAT(p.approved_at, '%Y-%m-%d') ASC
+        """, nativeQuery = true)
+    List<DailyRevenueProjection> findDailyRevenueSince(@Param("from") LocalDateTime from);
 }
