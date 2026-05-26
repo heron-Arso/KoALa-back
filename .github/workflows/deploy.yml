@@ -59,6 +59,11 @@ jobs:
             fuser -k 8080/tcp || true
             sleep 3
 
+            # 환경변수 로드
+            set -a
+            source /home/ubuntu/.env
+            set +a
+
             # 새 프로세스 시작
             cd /home/ubuntu/app
             nohup java \
