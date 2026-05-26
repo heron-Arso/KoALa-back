@@ -301,4 +301,9 @@ public class ArtistService {
         return artistRepository.findByArtistCode(artistCode)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND));
     }
+    public boolean isFollowing(String artistCode, Long userId){
+        if (userId == null) return false;
+        Artist artist = getArtistEntityByCode(artistCode);
+        return artistFollowRepository.existsByUserIdAndArtistId(userId, artist.getId());
+    }
 }

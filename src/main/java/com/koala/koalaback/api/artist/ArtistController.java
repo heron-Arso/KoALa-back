@@ -31,7 +31,12 @@ public class ArtistController {
             @AuthenticationPrincipal Long userId) {
         return ApiResponse.ok(artistService.getArtist(artistCode, userId));
     }
-
+    @GetMapping("/{artistCode}/following")
+    public ApiResponse<Boolean> getFollowStatus(
+            @PathVariable String artistCode,
+            @AuthenticationPrincipal Long userId) {
+            return ApiResponse.ok(artistService.isFollowing(artistCode, userId));
+    }
     @PostMapping("/{artistCode}/follow")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<Void> follow(

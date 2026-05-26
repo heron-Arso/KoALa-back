@@ -100,6 +100,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/password-reset/reset",
                                 "/api/v1/auth/toss/login"       // 앱인토스 토스 로그인
                         ).permitAll();
+                        auth.requestMatchers(HttpMethod.GET, "/api/v1/artists/*/following").authenticated();
                         auth.requestMatchers(HttpMethod.GET,
                                 "/api/v1/artists/**",
                                 "/api/v1/skus/**",
