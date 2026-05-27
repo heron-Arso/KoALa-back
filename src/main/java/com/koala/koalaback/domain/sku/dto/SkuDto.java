@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,7 +18,7 @@ public class SkuDto {
 
     // ── Requests ──────────────────────────────────────────
 
-    @Getter
+    @Getter @Setter
     public static class CreateRequest {
         @NotBlank
         private String artistCode;
@@ -31,6 +32,10 @@ public class SkuDto {
         private String description;
         private String skuType;
         private String genre;
+        private String material;             // 재질/소재
+        private String materialDescription;  // 재질/소재 상세 설명
+        private String packagingTitle;       // 포장 섹션 제목
+        private String packagingDescription; // 포장 섹션 설명
 
         @NotNull @PositiveOrZero
         private BigDecimal listPrice;
@@ -47,7 +52,7 @@ public class SkuDto {
         private BigDecimal weightKg;
     }
 
-    @Getter
+    @Getter @Setter
     public static class UpdateRequest {
         @NotBlank
         private String name;
@@ -56,8 +61,12 @@ public class SkuDto {
         private String slug;
 
         private String description;
-        private String skuType;   // ARTWORK | GOODS
-        private String genre;     // ART_TOY | SCULPTURE | PAINTING | PRINT | PHOTOGRAPH | INSTALLATION | TEXTILE | OTHER
+        private String skuType;              // ARTWORK | GOODS
+        private String genre;                // ART_TOY | SCULPTURE | PAINTING | PRINT | PHOTOGRAPH | INSTALLATION | TEXTILE | OTHER
+        private String material;             // 재질/소재
+        private String materialDescription;  // 재질/소재 상세 설명
+        private String packagingTitle;       // 포장 섹션 제목
+        private String packagingDescription; // 포장 섹션 설명
 
         @NotNull @PositiveOrZero
         private BigDecimal listPrice;
@@ -154,6 +163,10 @@ public class SkuDto {
         private String description;
         private String skuType;
         private String genre;
+        private String material;
+        private String materialDescription;
+        private String packagingTitle;
+        private String packagingDescription;
         private String currency;
         private BigDecimal listPrice;
         private BigDecimal salePrice;
@@ -188,6 +201,10 @@ public class SkuDto {
                     .description(sku.getDescription())
                     .skuType(sku.getSkuType())
                     .genre(sku.getGenre())
+                    .material(sku.getMaterial())
+                    .materialDescription(sku.getMaterialDescription())
+                    .packagingTitle(sku.getPackagingTitle())
+                    .packagingDescription(sku.getPackagingDescription())
                     .currency(sku.getCurrency())
                     .listPrice(sku.getListPrice())
                     .salePrice(sku.getSalePrice())

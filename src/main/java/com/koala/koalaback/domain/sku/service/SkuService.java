@@ -133,7 +133,8 @@ public class SkuService {
             throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE);
         }
         sku.update(req.getName(), req.getSlug(), req.getDescription(),
-                req.getSkuType(), req.getGenre(),
+                req.getSkuType(), req.getGenre(), req.getMaterial(),
+                req.getMaterialDescription(), req.getPackagingTitle(), req.getPackagingDescription(),
                 req.getListPrice(), req.getSalePrice(), req.getPrimaryImageUrl(),
                 req.getIsLimitedEdition(), req.getEditionSize(), req.getEditionNumber(),
                 req.getBadges());
@@ -240,7 +241,8 @@ public class SkuService {
         // 대표 이미지로 지정된 경우 SKU.primaryImageUrl 동기화
         if (makePrimary) {
             sku.update(sku.getName(), sku.getSlug(), sku.getDescription(),
-                    sku.getSkuType(), sku.getGenre(),
+                    sku.getSkuType(), sku.getGenre(), sku.getMaterial(),
+                    sku.getMaterialDescription(), sku.getPackagingTitle(), sku.getPackagingDescription(),
                     sku.getListPrice(), sku.getSalePrice(), fileUrl,
                     sku.getIsLimitedEdition(), sku.getEditionSize(), sku.getEditionNumber(),
                     sku.getBadges());

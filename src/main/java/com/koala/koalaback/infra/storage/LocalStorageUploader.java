@@ -41,7 +41,7 @@ public class LocalStorageUploader implements StorageUploader {
             // 아티스트
             "interview_video", "interview_image", "studio", "hands",
             // SKU/상품
-            "main"
+            "main", "material", "packaging"
     );
 
     @Override

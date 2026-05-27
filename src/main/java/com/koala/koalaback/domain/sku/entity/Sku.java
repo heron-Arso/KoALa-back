@@ -37,7 +37,19 @@ public class Sku extends BaseTimeEntity {
     private String skuType;     // ARTWORK, GOODS
 
     @Column(nullable = false, length = 50)
-    private String genre;       // ART_TOY, ...
+    private String genre;
+
+    @Column(length = 300)
+    private String material;          // 재질/소재 (예: 레진, 아크릴, 캔버스에 유화)
+
+    @Lob
+    private String materialDescription; // 재질/소재 상세 설명 (상세 페이지 표시용)
+
+    @Column(length = 200)
+    private String packagingTitle;       // 포장 섹션 제목
+
+    @Lob
+    private String packagingDescription; // 포장 섹션 설명
 
     @Column(nullable = false, length = 3)
     private String currency;
@@ -82,7 +94,8 @@ public class Sku extends BaseTimeEntity {
 
     @Builder
     public Sku(String skuCode, Artist artist, String name, String slug,
-               String description, String skuType, String genre,
+               String description, String skuType, String genre, String material,
+               String materialDescription, String packagingTitle, String packagingDescription,
                String currency, BigDecimal listPrice, BigDecimal salePrice,
                Boolean isLimitedEdition, Integer editionSize, Integer editionNumber,
                String primaryImageUrl, BigDecimal widthCm, BigDecimal heightCm,
@@ -95,6 +108,10 @@ public class Sku extends BaseTimeEntity {
         this.description = description;
         this.skuType = skuType != null ? skuType : "ARTWORK";
         this.genre = genre != null ? genre : "ART_TOY";
+        this.material = material;
+        this.materialDescription = materialDescription;
+        this.packagingTitle = packagingTitle;
+        this.packagingDescription = packagingDescription;
         this.currency = currency != null ? currency : "KRW";
         this.listPrice = listPrice;
         this.salePrice = salePrice;
@@ -111,7 +128,8 @@ public class Sku extends BaseTimeEntity {
     }
 
     public void update(String name, String slug, String description,
-                       String skuType, String genre,
+                       String skuType, String genre, String material,
+                       String materialDescription, String packagingTitle, String packagingDescription,
                        BigDecimal listPrice, BigDecimal salePrice, String primaryImageUrl,
                        Boolean isLimitedEdition, Integer editionSize, Integer editionNumber,
                        String badges) {
@@ -120,6 +138,10 @@ public class Sku extends BaseTimeEntity {
         this.description = description;
         if (skuType != null && !skuType.isBlank()) this.skuType = skuType;
         if (genre    != null && !genre.isBlank())    this.genre = genre;
+        this.material = material;
+        this.materialDescription = materialDescription;
+        this.packagingTitle = packagingTitle;
+        this.packagingDescription = packagingDescription;
         this.listPrice = listPrice;
         this.salePrice = salePrice;
         this.primaryImageUrl = primaryImageUrl;
