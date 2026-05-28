@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -38,6 +39,7 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{userId}/suspend")
+    @Transactional  // 변경감지(dirty checking)로 status 가 실제 반영되도록
     public ApiResponse<Void> suspendUser(@PathVariable Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -46,6 +48,7 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{userId}/activate")
+    @Transactional  // 변경감지(dirty checking)로 status 가 실제 반영되도록
     public ApiResponse<Void> activateUser(@PathVariable Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -38,4 +39,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             Pageable pageable);
     long countByCreatedAtAfter(LocalDateTime dateTime);
     long countByOrderStatus(String orderStatus);
+
+    /** 특정 상태이면서 생성 시각이 기준 이전인 주문 (미결제 만료 자동취소용) */
+    List<Order> findByOrderStatusAndCreatedAtBefore(String orderStatus, LocalDateTime threshold);
 }

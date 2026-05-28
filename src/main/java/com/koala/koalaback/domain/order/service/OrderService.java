@@ -174,6 +174,28 @@ public class OrderService {
         return OrderDto.OrderDetailResponse.from(order);
     }
 
+    /**
+     * 미결제 만료 주문 1건 자동 취소 + 재고 복구 (스케줄러 전용).
+     * <p>각 주문을 독립 트랜잭션으로 처리한다. 조회 후 결제됐을 수 있으므로
+     * 트랜잭션 안에서 상태를 재확인하고, PENDING_PAYMENT 가 아니면 건드리지 않는다.
+     * 결제 전 주문이라 환불 대상(CAPTURED 결제)은 없다.
+     */
+    @Transactional
+    public void expirePendingOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return;
+        if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) return; // 그 사이 결제/취소됨
+
+        order.getOrderItems().forEach(item -> {
+            if (item.getSku() != null) {
+                stockService.restore(item.getSku().getId(), item.getQuantity(),
+                        "order_expiry", item.getId());
+            }
+        });
+        order.cancel();
+        log.info("미결제 만료 주문 자동취소: orderNo={}", order.getOrderNo());
+    }
+
     /** 관리자 강제 취소 — 모든 상태 취소 가능, 이유 필수, 부분환불 지원 */
     @Transactional
     public OrderDto.OrderDetailResponse adminCancelOrder(String orderNo, OrderDto.AdminCancelRequest req) {
