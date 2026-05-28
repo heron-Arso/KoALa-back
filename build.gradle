@@ -47,6 +47,8 @@ dependencies {
     // ── DB ────────────────────────────────────────────────
     runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'com.h2database:h2'
+    // Spring Boot 4.x: flyway-core 자동설정(FlywayAutoConfiguration)이 JPA와 순환 의존성을
+    // 일으켜, 자동설정을 쓰지 않고 FlywayConfig 에서 직접 Flyway 빈을 등록한다.
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-mysql'
 
@@ -82,7 +84,8 @@ dependencies {
    // implementation 'io.github.bucket4j:bucket4j-core:8.10.1'
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
     // ── Utils ─────────────────────────────────────────────
-    implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
+    // jasypt: 미사용(ENC() 값 없음) + Spring Boot 4 Flyway 순환 의존성 유발하여 제거
+    // implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
 
     // ─── OAuth2 ───────────────────────────
     implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
